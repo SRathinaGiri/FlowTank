@@ -8,6 +8,8 @@ import VisualConstructorOptions = powerbi.extensibility.visual.VisualConstructor
 import VisualUpdateOptions = powerbi.extensibility.visual.VisualUpdateOptions;
 import IVisual = powerbi.extensibility.visual.IVisual;
 import IVisualHost = powerbi.extensibility.visual.IVisualHost;
+import ISelectionId = powerbi.visuals.ISelectionId;
+import ISelectionManager = powerbi.extensibility.ISelectionManager;
 import DataView = powerbi.DataView;
 import DataViewCategoryColumn = powerbi.DataViewCategoryColumn;
 import DataViewValueColumn = powerbi.DataViewValueColumn;
@@ -19,6 +21,7 @@ interface FlowItem {
     label: string;
     value: number;
     direction: FlowDirection;
+    selectionId: ISelectionId;
 }
 
 type FlowDirection = "in" | "out";
@@ -41,6 +44,7 @@ interface PipeEntry {
     direction: FlowDirection;
     label: string;
     value: number;
+    selectionId: ISelectionId;
     color: string;
     y: number;
     width: number;
@@ -68,6 +72,7 @@ let visualInstanceCounter = 0;
 export class Visual implements IVisual {
     private readonly target: HTMLElement;
     private readonly host: IVisualHost;
+    private readonly selectionManager: ISelectionManager;
     private readonly root: HTMLDivElement;
     private readonly svg: SVGSVGElement;
     private readonly tankBorderMaskId: string;
@@ -83,6 +88,7 @@ export class Visual implements IVisual {
         this.tankClipPathId = `flowTankClip${visualInstanceCounter}`;
         this.target = options.element;
         this.host = options.host;
+        this.selectionManager = this.host.createSelectionManager();
         this.root = document.createElement("div");
         this.root.className = "flowTankRoot";
 
@@ -94,6 +100,7 @@ export class Visual implements IVisual {
 
         this.root.appendChild(this.svg);
         this.target.appendChild(this.root);
+        this.root.addEventListener("contextmenu", (event) => this.showVisualContextMenu(event));
     }
 
     public update(options: VisualUpdateOptions): void {
@@ -246,6 +253,7 @@ export class Visual implements IVisual {
                 direction,
                 label: item.label,
                 value: item.value,
+                selectionId: item.selectionId,
                 color,
                 y,
                 width,
@@ -277,11 +285,11 @@ export class Visual implements IVisual {
                 ? this.curvePath({ x: outsideX, y: entry.y }, { x: tankX + 22, y: entry.y })
                 : this.curvePath({ x: tankX - 22, y: entry.y }, { x: outsideX, y: entry.y });
 
-            this.appendPipe(path, entry.color, entry.width);
+            this.appendPipe(path, entry.color, entry.width, entry);
 
             if (showLabels) {
                 const label = this.truncateText(this.formatFlowLabel(entry), maxLabelWidth, fontSize);
-                this.appendText(labelX, entry.y, label, textColor, fontSize, labelAnchor, "600");
+                this.appendText(labelX, entry.y, label, textColor, fontSize, labelAnchor, "600", undefined, undefined, entry);
             }
         });
     }
@@ -319,11 +327,12 @@ export class Visual implements IVisual {
             const value = Math.abs(numericValue);
             const key = `${direction}|${label}`;
             const existing = aggregated.get(key);
+            const selectionId = this.createItemSelectionId(sourceCategory, directionCategory, amountColumn, index);
 
             if (existing) {
                 existing.value += value;
             } else {
-                aggregated.set(key, { label, value, direction });
+                aggregated.set(key, { label, value, direction, selectionId });
             }
         });
 
@@ -376,12 +385,32 @@ export class Visual implements IVisual {
         this.svg.appendChild(background);
     }
 
-    private appendPipe(pathData: string, color: string, width: number): void {
+    private createItemSelectionId(
+        sourceCategory: DataViewCategoryColumn | undefined,
+        directionCategory: DataViewCategoryColumn | undefined,
+        amountColumn: DataViewValueColumn,
+        index: number
+    ): ISelectionId {
+        const builder = this.host.createSelectionIdBuilder();
+
+        if (sourceCategory) {
+            builder.withCategory(sourceCategory, index);
+        } else if (directionCategory) {
+            builder.withCategory(directionCategory, index);
+        } else if (amountColumn.source && amountColumn.source.queryName) {
+            builder.withMeasure(amountColumn.source.queryName);
+        }
+
+        return builder.createSelectionId();
+    }
+
+    private appendPipe(pathData: string, color: string, width: number, entry: PipeEntry): void {
         const pipe = this.svgElement("path");
         pipe.classList.add("flowTankPipe");
         pipe.setAttribute("d", pathData);
         pipe.setAttribute("stroke", color);
         pipe.setAttribute("stroke-width", width.toFixed(2));
+        this.bindItemContextMenu(pipe, entry);
         this.svg.appendChild(pipe);
     }
 
@@ -541,8 +570,9 @@ export class Visual implements IVisual {
             swatch.setAttribute("fill", entry.color);
             swatch.setAttribute("stroke", entry.color);
             this.appendTitle(swatch, this.getTooltipText(entry, totalValue));
+            this.bindItemContextMenu(swatch, entry);
             this.svg.appendChild(swatch);
-            this.appendText(x + 18, rowY, label, textColor, legendFontSize, "start", "600", undefined, this.getTooltipText(entry, totalValue));
+            this.appendText(x + 18, rowY, label, textColor, legendFontSize, "start", "600", undefined, this.getTooltipText(entry, totalValue), entry);
         });
     }
 
@@ -604,6 +634,7 @@ export class Visual implements IVisual {
             : `M ${x.toFixed(2)} ${y.toFixed(2)} L ${(x + width).toFixed(2)} ${y.toFixed(2)}`;
         liquid.setAttribute("d", `${topPath} L ${(x + width).toFixed(2)} ${bottom.toFixed(2)} L ${x.toFixed(2)} ${bottom.toFixed(2)} Z`);
         this.appendTitle(liquid, this.getTooltipText(entry, totalValue));
+        this.bindItemContextMenu(liquid, entry);
         parent.appendChild(liquid);
     }
 
@@ -703,7 +734,8 @@ export class Visual implements IVisual {
         anchor: string,
         weight: string,
         extraClass?: string,
-        title?: string
+        title?: string,
+        contextEntry?: PipeEntry
     ): void {
         const label = this.svgElement("text");
         label.classList.add("flowTankLabel");
@@ -720,6 +752,9 @@ export class Visual implements IVisual {
         label.textContent = text;
         if (title) {
             this.appendTitle(label, title);
+        }
+        if (contextEntry) {
+            this.bindItemContextMenu(label, contextEntry);
         }
         this.svg.appendChild(label);
     }
@@ -744,6 +779,26 @@ export class Visual implements IVisual {
         while (this.svg.firstChild) {
             this.svg.removeChild(this.svg.firstChild);
         }
+    }
+
+    private showVisualContextMenu(event: MouseEvent): void {
+        event.preventDefault();
+        this.selectionManager.showContextMenu(
+            this.host.createSelectionIdBuilder().createSelectionId(),
+            { x: event.clientX, y: event.clientY }
+        );
+    }
+
+    private bindItemContextMenu(element: SVGElement, entry: PipeEntry): void {
+        element.addEventListener("contextmenu", (event: MouseEvent) => {
+            event.preventDefault();
+            event.stopPropagation();
+            this.selectionManager.showContextMenu(
+                entry.selectionId,
+                { x: event.clientX, y: event.clientY },
+                "source"
+            );
+        });
     }
 
     private svgElement<K extends keyof SVGElementTagNameMap>(tagName: K): SVGElementTagNameMap[K] {
