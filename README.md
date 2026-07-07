@@ -1,0 +1,76 @@
+# FlowTank
+
+FlowTank is a Microsoft Power BI custom visual for comparing multiple inflows, multiple outflows, and the resulting balance in a central tank view. It is useful for financial flows, budgets, income and expense mixes, cash movement, and other scenarios where users need to compare what enters and leaves a system.
+
+## Features
+
+- Separate inflow and outflow sides with proportional pipe thickness.
+- Central tank view with stacked liquid segments for each side.
+- Balance indicator for surplus or deficit.
+- Optional legends, tank labels, item labels, and configurable text size.
+- Formatting options for inflow, outflow, profit, loss, and text colors.
+- No external web access privileges.
+
+## Field Wells
+
+- **Source**: Pipe label, such as revenue category or expense category.
+- **Direction**: Optional grouping that identifies inflow or outflow. Values containing words like `Revenue`, `Income`, `Inflow`, or `Credit` are treated as inflow. Values containing words like `Expense`, `Expenditure`, `Outflow`, `Cost`, or `Debit` are treated as outflow.
+- **Amount**: Numeric value used for pipe thickness and tank totals.
+
+If **Direction** is not supplied, positive amounts are treated as inflow and negative amounts are treated as outflow.
+
+## Sample Files
+
+Sample assets are included for AppSource validation and user evaluation:
+
+- `sample-data/flowtank_sample_financials.csv`
+- `sample-data/flowtank_sample.pbix`
+
+## Build
+
+Install dependencies:
+
+```powershell
+npm install
+```
+
+Run lint:
+
+```powershell
+npm run lint
+```
+
+Package the visual:
+
+```powershell
+npm run package
+```
+
+Run the Power BI certification package command:
+
+```powershell
+npm run package:certification
+```
+
+The packaged visual is created in `dist`.
+
+## Certification Notes
+
+This repository is prepared for Microsoft Power BI custom visual certification:
+
+- The certification source branch is `certification`.
+- The repository contains source code for one visual only.
+- `node_modules`, `.tmp`, and `dist` are excluded from source control.
+- `capabilities.json` declares no web access privileges.
+- The visual does not call external services.
+- The visual does not use `fetch`, `XMLHttpRequest`, `eval`, or `innerHTML`.
+
+## Privacy And Support
+
+- Privacy policy: [PRIVACY.md](PRIVACY.md)
+- Support: [SUPPORT.md](SUPPORT.md)
+- Issues: https://github.com/SRathinaGiri/FlowTank/issues
+
+## License
+
+This project is licensed under the MIT License. See [LICENSE](LICENSE).

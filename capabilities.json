@@ -1,0 +1,178 @@
+{
+    "dataRoles": [
+        {
+            "displayName": "Source",
+            "name": "source",
+            "kind": "Grouping"
+        },
+        {
+            "displayName": "Direction",
+            "name": "direction",
+            "kind": "Grouping"
+        },
+        {
+            "displayName": "Amount",
+            "name": "amount",
+            "kind": "Measure"
+        }
+    ],
+    "objects": {
+        "appearance": {
+            "displayName": "Appearance",
+            "properties": {
+                "inflowColor": {
+                    "displayName": "Inflow color",
+                    "type": {
+                        "fill": {
+                            "solid": {
+                                "color": true
+                            }
+                        }
+                    }
+                },
+                "outflowColor": {
+                    "displayName": "Outflow color",
+                    "type": {
+                        "fill": {
+                            "solid": {
+                                "color": true
+                            }
+                        }
+                    }
+                },
+                "profitColor": {
+                    "displayName": "Profit color",
+                    "type": {
+                        "fill": {
+                            "solid": {
+                                "color": true
+                            }
+                        }
+                    }
+                },
+                "lossColor": {
+                    "displayName": "Loss color",
+                    "type": {
+                        "fill": {
+                            "solid": {
+                                "color": true
+                            }
+                        }
+                    }
+                },
+                "textColor": {
+                    "displayName": "Text color",
+                    "type": {
+                        "fill": {
+                            "solid": {
+                                "color": true
+                            }
+                        }
+                    }
+                },
+                "showLabels": {
+                    "displayName": "Show legends",
+                    "type": {
+                        "bool": true
+                    }
+                },
+                "showTankLabels": {
+                    "displayName": "Show tank labels",
+                    "type": {
+                        "bool": true
+                    }
+                },
+                "showItemLabels": {
+                    "displayName": "Show item labels in liquid",
+                    "type": {
+                        "bool": true
+                    }
+                },
+                "showBalance": {
+                    "displayName": "Show balance",
+                    "type": {
+                        "bool": true
+                    }
+                },
+                "legendPosition": {
+                    "displayName": "Legend position",
+                    "type": {
+                        "enumeration": [
+                            {
+                                "value": "both",
+                                "displayName": "Both sides"
+                            },
+                            {
+                                "value": "left",
+                                "displayName": "Left side only"
+                            },
+                            {
+                                "value": "right",
+                                "displayName": "Right side only"
+                            }
+                        ]
+                    }
+                },
+                "fontSize": {
+                    "displayName": "Text size",
+                    "type": {
+                        "formatting": {
+                            "fontSize": true
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "dataViewMappings": [
+        {
+            "conditions": [
+                {
+                    "source": {
+                        "max": 1
+                    },
+                    "direction": {
+                        "max": 1
+                    },
+                    "amount": {
+                        "max": 1
+                    }
+                }
+            ],
+            "categorical": {
+                "categories": {
+                    "select": [
+                        {
+                            "for": {
+                                "in": "source"
+                            }
+                        },
+                        {
+                            "for": {
+                                "in": "direction"
+                            }
+                        }
+                    ],
+                    "dataReductionAlgorithm": {
+                        "top": {
+                            "count": 100
+                        }
+                    }
+                },
+                "values": {
+                    "select": [
+                        {
+                            "bind": {
+                                "to": "amount"
+                            }
+                        }
+                    ]
+                }
+            }
+        }
+    ],
+    "sorting": {
+        "default": {}
+    },
+    "privileges": []
+}
