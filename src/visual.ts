@@ -320,7 +320,7 @@ export class Visual implements IVisual {
 
             if (showLabels) {
                 const label = this.truncateText(this.formatFlowLabel(entry), maxLabelWidth, fontSize);
-                this.appendText(labelX, entry.y, label, textColor, fontSize, labelAnchor, "600", undefined, undefined, entry);
+                this.appendText(labelX, entry.y, label, textColor, fontSize, labelAnchor, "600", undefined, entry);
             }
         });
     }
@@ -493,7 +493,7 @@ export class Visual implements IVisual {
             const rawHeight = totalHeight * (entry.value / totalValue);
             const segmentHeight = isLast ? Math.max(0, bottom - segmentTop) : rawHeight;
 
-            this.appendLiquid(parent, x, segmentTop, width, segmentHeight, entry, totalValue, index === 0);
+            this.appendLiquid(parent, x, segmentTop, width, segmentHeight, entry, index === 0);
             if (showItemLabels) {
                 this.appendLiquidItemLabel(entry, totalValue, x, segmentTop, width, segmentHeight, textColor, fontSize);
             }
@@ -533,7 +533,6 @@ export class Visual implements IVisual {
             "middle",
             "700",
             "flowTankLiquidItemLabel",
-            this.getTooltipText(entry, totalValue),
             entry
         );
     }
@@ -605,10 +604,9 @@ export class Visual implements IVisual {
             swatch.setAttribute("rx", "3");
             swatch.setAttribute("fill", entry.color);
             swatch.setAttribute("stroke", entry.color);
-            this.appendTitle(swatch, this.getTooltipText(entry, totalValue));
             this.bindItemInteractions(swatch, entry);
             this.svg.appendChild(swatch);
-            this.appendText(x + 18, rowY, label, textColor, legendFontSize, "start", "600", undefined, this.getTooltipText(entry, totalValue), entry);
+            this.appendText(x + 18, rowY, label, textColor, legendFontSize, "start", "600", undefined, entry);
         });
     }
 
@@ -644,11 +642,11 @@ export class Visual implements IVisual {
         area.setAttribute("width", (tankWidth / 2).toFixed(2));
         area.setAttribute("height", emptyHeight.toFixed(2));
         area.setAttribute("clip-path", `url(#${this.tankClipPathId})`);
-        this.appendTitle(area, this.getBalanceTooltipText(summary));
+        this.bindBalanceTooltip(area, summary);
         this.svg.appendChild(area);
     }
 
-    private appendLiquid(parent: SVGElement, x: number, y: number, width: number, height: number, entry: PipeEntry, totalValue: number, waveTop: boolean): void {
+    private appendLiquid(parent: SVGElement, x: number, y: number, width: number, height: number, entry: PipeEntry, waveTop: boolean): void {
         if (height <= 0) {
             return;
         }
@@ -669,7 +667,6 @@ export class Visual implements IVisual {
             ].join(" ")
             : `M ${x.toFixed(2)} ${y.toFixed(2)} L ${(x + width).toFixed(2)} ${y.toFixed(2)}`;
         liquid.setAttribute("d", `${topPath} L ${(x + width).toFixed(2)} ${bottom.toFixed(2)} L ${x.toFixed(2)} ${bottom.toFixed(2)} Z`);
-        this.appendTitle(liquid, this.getTooltipText(entry, totalValue));
         this.bindItemInteractions(liquid, entry);
         parent.appendChild(liquid);
     }
@@ -770,7 +767,6 @@ export class Visual implements IVisual {
         anchor: string,
         weight: string,
         extraClass?: string,
-        title?: string,
         contextEntry?: PipeEntry
     ): SVGTextElement {
         const label = this.svgElement("text");
@@ -786,9 +782,6 @@ export class Visual implements IVisual {
         label.setAttribute("font-weight", weight);
         label.setAttribute("text-anchor", anchor);
         label.textContent = text;
-        if (title) {
-            this.appendTitle(label, title);
-        }
         if (contextEntry) {
             this.bindItemInteractions(label, contextEntry);
         }
@@ -892,6 +885,40 @@ export class Visual implements IVisual {
                 isTouchEvent: false,
                 dataItems: this.getTooltipDataItems(entry),
                 identities: [entry.selectionId]
+            });
+        });
+        element.addEventListener("mouseleave", () => {
+            this.host.tooltipService.hide({
+                isTouchEvent: false,
+                immediately: false
+            });
+        });
+    }
+
+    private bindBalanceTooltip(element: SVGElement, summary: FlowSummary): void {
+        if (!this.host.tooltipService || !this.host.tooltipService.enabled()) {
+            return;
+        }
+
+        element.addEventListener("mousemove", (event: MouseEvent) => {
+            this.host.tooltipService.show({
+                coordinates: [event.clientX, event.clientY],
+                isTouchEvent: false,
+                identities: [],
+                dataItems: [
+                    {
+                        displayName: summary.balance > 0 ? "Surplus" : "Deficit",
+                        value: this.formatValue(Math.abs(summary.balance))
+                    },
+                    {
+                        displayName: "Inflow",
+                        value: this.formatValue(summary.totalIn)
+                    },
+                    {
+                        displayName: "Outflow",
+                        value: this.formatValue(summary.totalOut)
+                    }
+                ]
             });
         });
         element.addEventListener("mouseleave", () => {
@@ -1088,19 +1115,6 @@ export class Visual implements IVisual {
         return `${entry.label} ${this.formatValue(entry.value)} - ${this.formatPercent(entry.percent)}`;
     }
 
-    private getTooltipText(entry: PipeEntry, totalValue: number): string {
-        const direction = entry.direction === "in" ? "Inflow" : "Outflow";
-        const percent = totalValue > 0 ? this.formatPercent(entry.value / totalValue) : "0%";
-
-        return `${direction}: ${entry.label}\nAmount: ${this.formatValue(entry.value)}\nShare: ${percent}`;
-    }
-
-    private getBalanceTooltipText(summary: FlowSummary): string {
-        const label = summary.balance > 0 ? "Surplus" : "Deficit";
-
-        return `${label}: ${this.formatValue(Math.abs(summary.balance))}\nInflow: ${this.formatValue(summary.totalIn)}\nOutflow: ${this.formatValue(summary.totalOut)}`;
-    }
-
     private getBalanceStatusText(summary: FlowSummary): string {
         if (summary.balance === 0) {
             return "Balanced 0";
@@ -1113,13 +1127,6 @@ export class Visual implements IVisual {
         const value = this.formattingSettings.appearance.legendPosition.value.value;
 
         return value === "left" || value === "right" ? value : "both";
-    }
-
-    private appendTitle(element: SVGElement, text: string): void {
-        const title = this.svgElement("title");
-
-        title.textContent = text;
-        element.appendChild(title);
     }
 
     private formatPercent(value: number): string {
