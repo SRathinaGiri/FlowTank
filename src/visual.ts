@@ -66,7 +66,6 @@ interface SelectionElement {
 }
 
 interface RenderColors {
-    background: string;
     border: string;
     divider: string;
     focus: string;
@@ -205,7 +204,6 @@ export class Visual implements IVisual {
         const inFillHeight = Math.max(8, maxLiquidHeight * (summary.totalIn / maxSideTotal));
         const outFillHeight = Math.max(8, maxLiquidHeight * (summary.totalOut / maxSideTotal));
 
-        this.addBackground();
         const inflowEntries = this.getPipeEntries(summary.inflows, "in", tank.y, tank.height, inFillHeight, summary.totalIn, summary.totalIn, maxFlowValue, inflowColor);
         const outflowEntries = this.getPipeEntries(summary.outflows, "out", tank.y, tank.height, outFillHeight, summary.totalOut, summary.totalOut, maxFlowValue, outflowColor);
 
@@ -404,20 +402,6 @@ export class Visual implements IVisual {
 
     private findValueColumn(values: powerbi.DataViewValueColumns, roleName: string): DataViewValueColumn | undefined {
         return values.find((valueColumn) => Boolean(valueColumn.source && valueColumn.source.roles && valueColumn.source.roles[roleName])) || values[0];
-    }
-
-    private addBackground(): void {
-        const background = this.svgElement("rect");
-        background.setAttribute("x", "0");
-        background.setAttribute("y", "0");
-        background.setAttribute("width", ViewBoxWidth.toString());
-        background.setAttribute("height", this.viewBoxHeight.toString());
-        background.classList.add("flowTankBackground");
-        background.addEventListener("click", (event: MouseEvent) => {
-            event.stopPropagation();
-            this.clearSelection();
-        });
-        this.svg.appendChild(background);
     }
 
     private createItemSelectionId(
@@ -980,8 +964,6 @@ export class Visual implements IVisual {
     }
 
     private renderLandingPage(colors: RenderColors): void {
-        this.addBackground();
-
         const titleY = Math.max(120, this.viewBoxHeight * 0.32);
         const linkY = titleY + 86;
 
@@ -1017,7 +999,6 @@ export class Visual implements IVisual {
             const hyperlink = this.getPaletteColor(colorPalette.hyperlink, selected);
 
             return {
-                background,
                 border: foreground,
                 divider: foreground,
                 focus: hyperlink,
@@ -1029,7 +1010,6 @@ export class Visual implements IVisual {
         }
 
         return {
-            background: "#F7FAFC",
             border: "#405264",
             divider: "#405264",
             focus: "#2563EB",
@@ -1042,7 +1022,6 @@ export class Visual implements IVisual {
 
     private applyColorTheme(colors: RenderColors): void {
         this.root.classList.toggle("flowTankHighContrast", Boolean(this.host.colorPalette && this.host.colorPalette.isHighContrast));
-        this.root.style.setProperty("--flowTankBackground", colors.background);
         this.root.style.setProperty("--flowTankBorder", colors.border);
         this.root.style.setProperty("--flowTankDivider", colors.divider);
         this.root.style.setProperty("--flowTankFocus", colors.focus);
