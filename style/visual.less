@@ -5,6 +5,11 @@
     min-height: 0;
     overflow: hidden;
     font-family: "Segoe UI", Arial, sans-serif;
+    --flowTankBackground: #F7FAFC;
+    --flowTankBorder: #405264;
+    --flowTankDivider: #405264;
+    --flowTankFocus: #2563EB;
+    --flowTankTankFill: rgba(255, 255, 255, 0.72);
 }
 
 .flowTankSvg {
@@ -21,7 +26,7 @@
 
 .flowTankMainTubeOutline {
     fill: none;
-    stroke: rgba(64, 82, 100, 0.82);
+    stroke: var(--flowTankBorder);
     stroke-linecap: butt;
     stroke-linejoin: round;
 }
@@ -38,12 +43,12 @@
 }
 
 .flowTankTankFill {
-    fill: rgba(255, 255, 255, 0.72);
+    fill: var(--flowTankTankFill);
 }
 
 .flowTankTankBorder {
     fill: none;
-    stroke: #405264;
+    stroke: var(--flowTankBorder);
     stroke-width: 3;
     stroke-linecap: round;
     stroke-linejoin: round;
@@ -51,7 +56,7 @@
 
 .flowTankTankTopRim {
     fill: none;
-    stroke: #405264;
+    stroke: var(--flowTankBorder);
     stroke-width: 3.5;
     stroke-linecap: round;
     stroke-linejoin: round;
@@ -59,7 +64,7 @@
 }
 
 .flowTankTankDivider {
-    stroke: #405264;
+    stroke: var(--flowTankDivider);
     stroke-width: 1.5;
     stroke-dasharray: 5 5;
     opacity: 0.7;
@@ -82,6 +87,10 @@
     cursor: default;
 }
 
+.flowTankBackground {
+    fill: var(--flowTankBackground);
+}
+
 .flowTankLabel {
     dominant-baseline: middle;
     pointer-events: auto;
@@ -93,7 +102,7 @@
 }
 
 .flowTankSelectable:focus {
-    filter: drop-shadow(0 0 0.16rem #2563EB);
+    filter: drop-shadow(0 0 0.16rem var(--flowTankFocus));
 }
 
 .flowTankSelected {
@@ -113,4 +122,18 @@
 
 .flowTankMuted {
     opacity: 0.7;
+}
+
+.flowTankLink {
+    cursor: pointer;
+    text-decoration: underline;
+}
+
+.flowTankHighContrast .flowTankLiquid {
+    fill-opacity: 1;
+    stroke-opacity: 1;
+}
+
+.flowTankHighContrast .flowTankDimmed {
+    opacity: 0.45;
 }

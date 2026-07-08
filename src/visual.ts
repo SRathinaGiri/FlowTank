@@ -65,11 +65,23 @@ interface SelectionElement {
     selectionId: FlowSelectionId;
 }
 
+interface RenderColors {
+    background: string;
+    border: string;
+    divider: string;
+    focus: string;
+    inflow: string;
+    outflow: string;
+    tankFill: string;
+    text: string;
+}
+
 const SvgNamespace = "http://www.w3.org/2000/svg";
 const ViewBoxWidth = 800;
 const DefaultViewBoxHeight = 510;
 const MinViewBoxHeight = 420;
 const MaxViewBoxHeight = 900;
+const GitHubUrl = "https://github.com/SRathinaGiri/FlowTank";
 const InflowPalette = ["#86EFAC", "#7DD3FC", "#93C5FD", "#A7F3D0", "#99F6E4", "#C4B5FD"];
 const OutflowPalette = ["#FCA5A5", "#FDBA74", "#FECACA", "#F9A8D4", "#FDE68A", "#FBCFE8"];
 const LiquidTopPadding = 18;
@@ -85,6 +97,7 @@ export class Visual implements IVisual {
     private readonly tankClipPathId: string;
     private selectedIds: FlowSelectionId[] = [];
     private selectionElements: SelectionElement[] = [];
+    private allowInteractions = true;
     private viewBoxHeight = DefaultViewBoxHeight;
     private formattingSettings: VisualFormattingSettingsModel;
     private readonly formattingSettingsService: FormattingSettingsService;
@@ -126,18 +139,21 @@ export class Visual implements IVisual {
             this.formattingSettings = dataView
                 ? this.formattingSettingsService.populateFormattingSettingsModel(VisualFormattingSettingsModel, dataView)
                 : new VisualFormattingSettingsModel();
+            const colors = this.getRenderColors();
+            this.applyColorTheme(colors);
+            this.allowInteractions = !this.host.hostCapabilities || this.host.hostCapabilities.allowInteractions !== false;
 
             this.clear();
             this.selectedIds = this.selectionManager.getSelectionIds() as FlowSelectionId[];
 
             const summary = this.getFlowSummary(dataView);
             if (!summary.inflows.length && !summary.outflows.length) {
-                this.renderEmptyState();
+                this.renderLandingPage(colors);
                 this.host.eventService.renderingFinished(options);
                 return;
             }
 
-            this.render(summary);
+            this.render(summary, colors);
             this.updateSelectionStyles();
             this.host.eventService.renderingFinished(options);
         } catch (error) {
@@ -160,11 +176,11 @@ export class Visual implements IVisual {
         this.svg.setAttribute("viewBox", `0 0 ${ViewBoxWidth} ${this.viewBoxHeight.toFixed(2)}`);
     }
 
-    private render(summary: FlowSummary): void {
+    private render(summary: FlowSummary, colors: RenderColors): void {
         const fontSize = this.getFontSize();
-        const textColor = this.formattingSettings.appearance.textColor.value.value;
-        const inflowColor = this.formattingSettings.appearance.inflowColor.value.value;
-        const outflowColor = this.formattingSettings.appearance.outflowColor.value.value;
+        const textColor = colors.text;
+        const inflowColor = colors.inflow;
+        const outflowColor = colors.outflow;
         const showLegends = this.formattingSettings.appearance.showLabels.value;
         const showTankLabels = this.formattingSettings.appearance.showTankLabels.value;
         const showItemLabels = this.formattingSettings.appearance.showItemLabels.value;
@@ -396,7 +412,6 @@ export class Visual implements IVisual {
         background.setAttribute("y", "0");
         background.setAttribute("width", ViewBoxWidth.toString());
         background.setAttribute("height", this.viewBoxHeight.toString());
-        background.setAttribute("fill", "#F7FAFC");
         background.classList.add("flowTankBackground");
         background.addEventListener("click", (event: MouseEvent) => {
             event.stopPropagation();
@@ -757,7 +772,7 @@ export class Visual implements IVisual {
         extraClass?: string,
         title?: string,
         contextEntry?: PipeEntry
-    ): void {
+    ): SVGTextElement {
         const label = this.svgElement("text");
         label.classList.add("flowTankLabel");
         if (extraClass) {
@@ -778,13 +793,8 @@ export class Visual implements IVisual {
             this.bindItemInteractions(label, contextEntry);
         }
         this.svg.appendChild(label);
-    }
 
-    private renderEmptyState(): void {
-        this.addBackground();
-        const textColor = this.formattingSettings.appearance.textColor.value.value;
-        this.appendText(ViewBoxWidth / 2, 230, "Add Source, optional Direction, and Amount fields.", textColor, 18, "middle", "600", "flowTankMuted");
-        this.appendText(ViewBoxWidth / 2, 265, "Positive amounts become inflow; negative amounts become outflow.", textColor, 16, "middle", "500", "flowTankMuted");
+        return label;
     }
 
     private curvePath(start: Point, end: Point): string {
@@ -806,6 +816,10 @@ export class Visual implements IVisual {
 
     private showVisualContextMenu(event: MouseEvent): void {
         event.preventDefault();
+        if (!this.allowInteractions) {
+            return;
+        }
+
         this.selectionManager.showContextMenu(
             this.host.createSelectionIdBuilder().createSelectionId(),
             { x: event.clientX, y: event.clientY }
@@ -816,6 +830,10 @@ export class Visual implements IVisual {
         element.addEventListener("contextmenu", (event: MouseEvent) => {
             event.preventDefault();
             event.stopPropagation();
+            if (!this.allowInteractions) {
+                return;
+            }
+
             this.selectionManager.showContextMenu(
                 entry.selectionId,
                 { x: event.clientX, y: event.clientY },
@@ -833,24 +851,62 @@ export class Visual implements IVisual {
 
         element.addEventListener("click", (event: MouseEvent) => {
             event.stopPropagation();
+            if (!this.allowInteractions) {
+                return;
+            }
+
             this.selectItem(entry.selectionId, event.ctrlKey || event.metaKey);
         });
         element.addEventListener("keydown", (event: KeyboardEvent) => {
             if (event.key === "Enter" || event.key === " " || event.key === "Spacebar") {
                 event.preventDefault();
                 event.stopPropagation();
+                if (!this.allowInteractions) {
+                    return;
+                }
+
                 this.selectItem(entry.selectionId, event.ctrlKey || event.metaKey);
             } else if (event.key === "ContextMenu" || (event.shiftKey && event.key === "F10")) {
                 event.preventDefault();
                 event.stopPropagation();
+                if (!this.allowInteractions) {
+                    return;
+                }
+
                 this.selectionManager.showContextMenu(entry.selectionId, this.getElementCenter(element), "source");
             }
         });
+        this.bindItemTooltip(element, entry);
         this.bindItemContextMenu(element, entry);
         this.selectionElements.push({ element, selectionId: entry.selectionId });
     }
 
+    private bindItemTooltip(element: SVGElement, entry: PipeEntry): void {
+        if (!this.host.tooltipService || !this.host.tooltipService.enabled()) {
+            return;
+        }
+
+        element.addEventListener("mousemove", (event: MouseEvent) => {
+            this.host.tooltipService.show({
+                coordinates: [event.clientX, event.clientY],
+                isTouchEvent: false,
+                dataItems: this.getTooltipDataItems(entry),
+                identities: [entry.selectionId]
+            });
+        });
+        element.addEventListener("mouseleave", () => {
+            this.host.tooltipService.hide({
+                isTouchEvent: false,
+                immediately: false
+            });
+        });
+    }
+
     private selectItem(selectionId: FlowSelectionId, multiSelect: boolean): void {
+        if (!this.allowInteractions) {
+            return;
+        }
+
         this.selectionManager.select(selectionId, multiSelect).then((ids) => {
             this.selectedIds = ids as FlowSelectionId[];
             this.updateSelectionStyles();
@@ -858,6 +914,10 @@ export class Visual implements IVisual {
     }
 
     private clearSelection(): void {
+        if (!this.allowInteractions) {
+            return;
+        }
+
         this.selectionManager.clear().then(() => {
             this.selectedIds = [];
             this.updateSelectionStyles();
@@ -890,6 +950,102 @@ export class Visual implements IVisual {
             x: rect.left + rect.width / 2,
             y: rect.top + rect.height / 2
         };
+    }
+
+    private renderLandingPage(colors: RenderColors): void {
+        this.addBackground();
+
+        const titleY = Math.max(120, this.viewBoxHeight * 0.32);
+        const linkY = titleY + 86;
+
+        this.appendText(ViewBoxWidth / 2, titleY, "FlowTank", colors.text, 30, "middle", "700");
+        this.appendText(ViewBoxWidth / 2, titleY + 42, "Add Source, optional Direction, and Amount fields.", colors.text, 16, "middle", "600", "flowTankMuted");
+        this.appendText(ViewBoxWidth / 2, titleY + 66, "Positive amounts become inflow; negative amounts become outflow.", colors.text, 14, "middle", "500", "flowTankMuted");
+
+        const link = this.appendText(ViewBoxWidth / 2, linkY, "Open GitHub documentation", colors.focus, 15, "middle", "700", "flowTankLink");
+        link.setAttribute("tabindex", "0");
+        link.setAttribute("focusable", "true");
+        link.setAttribute("role", "link");
+        link.setAttribute("aria-label", "Open FlowTank GitHub documentation");
+        link.addEventListener("click", (event: MouseEvent) => {
+            event.stopPropagation();
+            this.host.launchUrl(GitHubUrl);
+        });
+        link.addEventListener("keydown", (event: KeyboardEvent) => {
+            if (event.key === "Enter" || event.key === " " || event.key === "Spacebar") {
+                event.preventDefault();
+                event.stopPropagation();
+                this.host.launchUrl(GitHubUrl);
+            }
+        });
+    }
+
+    private getRenderColors(): RenderColors {
+        const colorPalette = this.host.colorPalette;
+
+        if (colorPalette && colorPalette.isHighContrast) {
+            const foreground = this.getPaletteColor(colorPalette.foreground, "#FFFFFF");
+            const background = this.getPaletteColor(colorPalette.background, "#000000");
+            const selected = this.getPaletteColor(colorPalette.foregroundSelected, foreground);
+            const hyperlink = this.getPaletteColor(colorPalette.hyperlink, selected);
+
+            return {
+                background,
+                border: foreground,
+                divider: foreground,
+                focus: hyperlink,
+                inflow: selected,
+                outflow: foreground,
+                tankFill: background,
+                text: foreground
+            };
+        }
+
+        return {
+            background: "#F7FAFC",
+            border: "#405264",
+            divider: "#405264",
+            focus: "#2563EB",
+            inflow: this.formattingSettings.appearance.inflowColor.value.value,
+            outflow: this.formattingSettings.appearance.outflowColor.value.value,
+            tankFill: "rgba(255, 255, 255, 0.72)",
+            text: this.formattingSettings.appearance.textColor.value.value
+        };
+    }
+
+    private applyColorTheme(colors: RenderColors): void {
+        this.root.classList.toggle("flowTankHighContrast", Boolean(this.host.colorPalette && this.host.colorPalette.isHighContrast));
+        this.root.style.setProperty("--flowTankBackground", colors.background);
+        this.root.style.setProperty("--flowTankBorder", colors.border);
+        this.root.style.setProperty("--flowTankDivider", colors.divider);
+        this.root.style.setProperty("--flowTankFocus", colors.focus);
+        this.root.style.setProperty("--flowTankTankFill", colors.tankFill);
+    }
+
+    private getPaletteColor(colorInfo: powerbi.IColorInfo | undefined, fallback: string): string {
+        return colorInfo && colorInfo.value ? colorInfo.value : fallback;
+    }
+
+    private getTooltipDataItems(entry: PipeEntry): powerbi.extensibility.VisualTooltipDataItem[] {
+        return [
+            {
+                displayName: "Direction",
+                value: entry.direction === "in" ? "Inflow" : "Outflow",
+                color: entry.color
+            },
+            {
+                displayName: "Source",
+                value: entry.label
+            },
+            {
+                displayName: "Amount",
+                value: this.formatValue(entry.value)
+            },
+            {
+                displayName: "Share",
+                value: this.formatPercent(entry.percent)
+            }
+        ];
     }
 
     private svgElement<K extends keyof SVGElementTagNameMap>(tagName: K): SVGElementTagNameMap[K] {

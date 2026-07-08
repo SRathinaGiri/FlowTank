@@ -171,8 +171,22 @@
             }
         }
     ],
+    "tooltips": {
+        "supportedTypes": {
+            "default": true,
+            "canvas": true
+        },
+        "roles": [
+            "source",
+            "direction",
+            "amount"
+        ],
+        "supportEnhancedTooltips": true
+    },
     "supportsKeyboardFocus": true,
     "supportsHighlight": true,
+    "supportsLandingPage": true,
+    "supportsEmptyDataView": true,
     "supportsMultiVisualSelection": true,
     "sorting": {
         "default": {}

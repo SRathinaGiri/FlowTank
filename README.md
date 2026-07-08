@@ -9,6 +9,9 @@ FlowTank is a Microsoft Power BI custom visual for comparing multiple inflows, m
 - Balance indicator for surplus or deficit.
 - Optional legends, tank labels, item labels, and configurable text size.
 - Formatting options for inflow, outflow, profit, loss, and text colors.
+- High contrast mode support using the Power BI host color palette.
+- Native Power BI tooltips, context menus, keyboard focus, and cross-visual selection.
+- Landing page with a GitHub documentation link when fields are not assigned.
 - No external web access privileges.
 
 ## Field Wells
@@ -64,6 +67,8 @@ This repository is prepared for Microsoft Power BI custom visual certification:
 - `capabilities.json` declares no web access privileges.
 - The visual does not call external services.
 - The visual does not use `fetch`, `XMLHttpRequest`, `eval`, or `innerHTML`.
+- The visual declares tooltip, high contrast, landing page, empty data view, keyboard focus, highlight, and multi-visual selection support.
+- App icon assets are included in `assets/icon.png` and `assets/icon-large.png`.
 
 ## Privacy And Support
 
