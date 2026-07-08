@@ -1100,10 +1100,31 @@ export class Visual implements IVisual {
     }
 
     private formatValue(value: number): string {
+        const decimalPlaces = this.clampDecimalPlaces(
+            this.formattingSettings.numberFormatting.valueDecimalPlaces.value
+        );
+        const displayUnits = this.formattingSettings.numberFormatting.displayUnits.value.value;
+
+        if (displayUnits === "auto") {
+            return new Intl.NumberFormat(undefined, {
+                notation: "compact",
+                minimumFractionDigits: 0,
+                maximumFractionDigits: decimalPlaces
+            }).format(value);
+        }
+
+        const units: Record<string, { divisor: number; suffix: string }> = {
+            none: { divisor: 1, suffix: "" },
+            thousands: { divisor: 1_000, suffix: "K" },
+            millions: { divisor: 1_000_000, suffix: "M" },
+            billions: { divisor: 1_000_000_000, suffix: "B" }
+        };
+        const unit = units[displayUnits] || units.none;
+
         return new Intl.NumberFormat(undefined, {
-            notation: "compact",
-            maximumFractionDigits: 1
-        }).format(value);
+            minimumFractionDigits: decimalPlaces,
+            maximumFractionDigits: decimalPlaces
+        }).format(value / unit.divisor) + unit.suffix;
     }
 
     private formatSignedValue(value: number): string {
@@ -1130,10 +1151,19 @@ export class Visual implements IVisual {
     }
 
     private formatPercent(value: number): string {
+        const decimalPlaces = this.clampDecimalPlaces(
+            this.formattingSettings.numberFormatting.percentDecimalPlaces.value
+        );
+
         return new Intl.NumberFormat(undefined, {
             style: "percent",
-            maximumFractionDigits: value < 0.1 ? 1 : 0
+            minimumFractionDigits: decimalPlaces,
+            maximumFractionDigits: decimalPlaces
         }).format(value);
+    }
+
+    private clampDecimalPlaces(value: number): number {
+        return Math.min(10, Math.max(0, Math.round(Number.isFinite(value) ? value : 0)));
     }
 
     private truncateText(text: string, maxWidth: number, fontSize: number): string {

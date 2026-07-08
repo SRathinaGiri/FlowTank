@@ -122,6 +122,50 @@
                     }
                 }
             }
+        },
+        "numberFormatting": {
+            "displayName": "Number formatting",
+            "properties": {
+                "displayUnits": {
+                    "displayName": "Display units",
+                    "type": {
+                        "enumeration": [
+                            {
+                                "value": "auto",
+                                "displayName": "Auto"
+                            },
+                            {
+                                "value": "none",
+                                "displayName": "None"
+                            },
+                            {
+                                "value": "thousands",
+                                "displayName": "Thousands"
+                            },
+                            {
+                                "value": "millions",
+                                "displayName": "Millions"
+                            },
+                            {
+                                "value": "billions",
+                                "displayName": "Billions"
+                            }
+                        ]
+                    }
+                },
+                "valueDecimalPlaces": {
+                    "displayName": "Value decimal places",
+                    "type": {
+                        "integer": true
+                    }
+                },
+                "percentDecimalPlaces": {
+                    "displayName": "Percentage decimal places",
+                    "type": {
+                        "integer": true
+                    }
+                }
+            }
         }
     },
     "dataViewMappings": [

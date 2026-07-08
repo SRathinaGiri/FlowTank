@@ -95,7 +95,43 @@ class AppearanceSettings extends FormattingSettingsCard {
     ];
 }
 
+class NumberFormattingSettings extends FormattingSettingsCard {
+    displayUnits = new formattingSettings.ItemDropdown({
+        name: "displayUnits",
+        displayName: "Display units",
+        value: { value: "auto", displayName: "Auto" },
+        items: [
+            { value: "auto", displayName: "Auto" },
+            { value: "none", displayName: "None" },
+            { value: "thousands", displayName: "Thousands" },
+            { value: "millions", displayName: "Millions" },
+            { value: "billions", displayName: "Billions" }
+        ]
+    });
+
+    valueDecimalPlaces = new formattingSettings.NumUpDown({
+        name: "valueDecimalPlaces",
+        displayName: "Value decimal places",
+        value: 1
+    });
+
+    percentDecimalPlaces = new formattingSettings.NumUpDown({
+        name: "percentDecimalPlaces",
+        displayName: "Percentage decimal places",
+        value: 1
+    });
+
+    name: string = "numberFormatting";
+    displayName: string = "Number formatting";
+    slices: Array<FormattingSettingsSlice> = [
+        this.displayUnits,
+        this.valueDecimalPlaces,
+        this.percentDecimalPlaces
+    ];
+}
+
 export class VisualFormattingSettingsModel extends FormattingSettingsModel {
     appearance = new AppearanceSettings();
-    cards = [this.appearance];
+    numberFormatting = new NumberFormattingSettings();
+    cards = [this.appearance, this.numberFormatting];
 }
