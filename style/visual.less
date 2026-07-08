@@ -68,12 +68,12 @@
 .flowTankLiquid {
     fill-opacity: 0.68;
     stroke-opacity: 0.95;
-    cursor: default;
+    cursor: pointer;
 }
 
 .flowTankLegendSwatch {
     stroke-width: 1.5;
-    cursor: default;
+    cursor: pointer;
 }
 
 .flowTankBalanceHoverArea {
@@ -85,6 +85,23 @@
 .flowTankLabel {
     dominant-baseline: middle;
     pointer-events: auto;
+}
+
+.flowTankSelectable {
+    cursor: pointer;
+    outline: none;
+}
+
+.flowTankSelectable:focus {
+    filter: drop-shadow(0 0 0.16rem #2563EB);
+}
+
+.flowTankSelected {
+    opacity: 1;
+}
+
+.flowTankDimmed {
+    opacity: 0.28;
 }
 
 .flowTankLiquidItemLabel {

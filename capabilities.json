@@ -171,6 +171,9 @@
             }
         }
     ],
+    "supportsKeyboardFocus": true,
+    "supportsHighlight": true,
+    "supportsMultiVisualSelection": true,
     "sorting": {
         "default": {}
     },

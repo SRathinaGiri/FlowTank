@@ -8,7 +8,6 @@ import VisualConstructorOptions = powerbi.extensibility.visual.VisualConstructor
 import VisualUpdateOptions = powerbi.extensibility.visual.VisualUpdateOptions;
 import IVisual = powerbi.extensibility.visual.IVisual;
 import IVisualHost = powerbi.extensibility.visual.IVisualHost;
-import ISelectionId = powerbi.visuals.ISelectionId;
 import ISelectionManager = powerbi.extensibility.ISelectionManager;
 import DataView = powerbi.DataView;
 import DataViewCategoryColumn = powerbi.DataViewCategoryColumn;
@@ -17,11 +16,13 @@ import PrimitiveValue = powerbi.PrimitiveValue;
 
 import { VisualFormattingSettingsModel } from "./settings";
 
+type FlowSelectionId = powerbi.extensibility.ISelectionId & powerbi.visuals.ISelectionId;
+
 interface FlowItem {
     label: string;
     value: number;
     direction: FlowDirection;
-    selectionId: ISelectionId;
+    selectionId: FlowSelectionId;
 }
 
 type FlowDirection = "in" | "out";
@@ -44,7 +45,7 @@ interface PipeEntry {
     direction: FlowDirection;
     label: string;
     value: number;
-    selectionId: ISelectionId;
+    selectionId: FlowSelectionId;
     color: string;
     y: number;
     width: number;
@@ -57,6 +58,11 @@ interface TankBorderGap {
     side: "left" | "right";
     y: number;
     width: number;
+}
+
+interface SelectionElement {
+    element: SVGElement;
+    selectionId: FlowSelectionId;
 }
 
 const SvgNamespace = "http://www.w3.org/2000/svg";
@@ -77,6 +83,8 @@ export class Visual implements IVisual {
     private readonly svg: SVGSVGElement;
     private readonly tankBorderMaskId: string;
     private readonly tankClipPathId: string;
+    private selectedIds: FlowSelectionId[] = [];
+    private selectionElements: SelectionElement[] = [];
     private viewBoxHeight = DefaultViewBoxHeight;
     private formattingSettings: VisualFormattingSettingsModel;
     private readonly formattingSettingsService: FormattingSettingsService;
@@ -101,6 +109,11 @@ export class Visual implements IVisual {
         this.root.appendChild(this.svg);
         this.target.appendChild(this.root);
         this.root.addEventListener("contextmenu", (event) => this.showVisualContextMenu(event));
+        this.root.addEventListener("click", () => this.clearSelection());
+        this.selectionManager.registerOnSelectCallback((ids) => {
+            this.selectedIds = ids as FlowSelectionId[];
+            this.updateSelectionStyles();
+        });
     }
 
     public update(options: VisualUpdateOptions): void {
@@ -115,6 +128,7 @@ export class Visual implements IVisual {
                 : new VisualFormattingSettingsModel();
 
             this.clear();
+            this.selectedIds = this.selectionManager.getSelectionIds() as FlowSelectionId[];
 
             const summary = this.getFlowSummary(dataView);
             if (!summary.inflows.length && !summary.outflows.length) {
@@ -124,6 +138,7 @@ export class Visual implements IVisual {
             }
 
             this.render(summary);
+            this.updateSelectionStyles();
             this.host.eventService.renderingFinished(options);
         } catch (error) {
             this.host.eventService.renderingFailed(options, error instanceof Error ? error.message : "Unknown rendering error");
@@ -382,6 +397,11 @@ export class Visual implements IVisual {
         background.setAttribute("width", ViewBoxWidth.toString());
         background.setAttribute("height", this.viewBoxHeight.toString());
         background.setAttribute("fill", "#F7FAFC");
+        background.classList.add("flowTankBackground");
+        background.addEventListener("click", (event: MouseEvent) => {
+            event.stopPropagation();
+            this.clearSelection();
+        });
         this.svg.appendChild(background);
     }
 
@@ -390,7 +410,7 @@ export class Visual implements IVisual {
         directionCategory: DataViewCategoryColumn | undefined,
         amountColumn: DataViewValueColumn,
         index: number
-    ): ISelectionId {
+    ): FlowSelectionId {
         const builder = this.host.createSelectionIdBuilder();
 
         if (sourceCategory) {
@@ -401,7 +421,7 @@ export class Visual implements IVisual {
             builder.withMeasure(amountColumn.source.queryName);
         }
 
-        return builder.createSelectionId();
+        return builder.createSelectionId() as FlowSelectionId;
     }
 
     private appendPipe(pathData: string, color: string, width: number, entry: PipeEntry): void {
@@ -410,7 +430,7 @@ export class Visual implements IVisual {
         pipe.setAttribute("d", pathData);
         pipe.setAttribute("stroke", color);
         pipe.setAttribute("stroke-width", width.toFixed(2));
-        this.bindItemContextMenu(pipe, entry);
+        this.bindItemInteractions(pipe, entry);
         this.svg.appendChild(pipe);
     }
 
@@ -498,7 +518,8 @@ export class Visual implements IVisual {
             "middle",
             "700",
             "flowTankLiquidItemLabel",
-            this.getTooltipText(entry, totalValue)
+            this.getTooltipText(entry, totalValue),
+            entry
         );
     }
 
@@ -570,7 +591,7 @@ export class Visual implements IVisual {
             swatch.setAttribute("fill", entry.color);
             swatch.setAttribute("stroke", entry.color);
             this.appendTitle(swatch, this.getTooltipText(entry, totalValue));
-            this.bindItemContextMenu(swatch, entry);
+            this.bindItemInteractions(swatch, entry);
             this.svg.appendChild(swatch);
             this.appendText(x + 18, rowY, label, textColor, legendFontSize, "start", "600", undefined, this.getTooltipText(entry, totalValue), entry);
         });
@@ -634,7 +655,7 @@ export class Visual implements IVisual {
             : `M ${x.toFixed(2)} ${y.toFixed(2)} L ${(x + width).toFixed(2)} ${y.toFixed(2)}`;
         liquid.setAttribute("d", `${topPath} L ${(x + width).toFixed(2)} ${bottom.toFixed(2)} L ${x.toFixed(2)} ${bottom.toFixed(2)} Z`);
         this.appendTitle(liquid, this.getTooltipText(entry, totalValue));
-        this.bindItemContextMenu(liquid, entry);
+        this.bindItemInteractions(liquid, entry);
         parent.appendChild(liquid);
     }
 
@@ -754,7 +775,7 @@ export class Visual implements IVisual {
             this.appendTitle(label, title);
         }
         if (contextEntry) {
-            this.bindItemContextMenu(label, contextEntry);
+            this.bindItemInteractions(label, contextEntry);
         }
         this.svg.appendChild(label);
     }
@@ -779,6 +800,8 @@ export class Visual implements IVisual {
         while (this.svg.firstChild) {
             this.svg.removeChild(this.svg.firstChild);
         }
+
+        this.selectionElements = [];
     }
 
     private showVisualContextMenu(event: MouseEvent): void {
@@ -799,6 +822,74 @@ export class Visual implements IVisual {
                 "source"
             );
         });
+    }
+
+    private bindItemInteractions(element: SVGElement, entry: PipeEntry): void {
+        element.classList.add("flowTankSelectable");
+        element.setAttribute("tabindex", "0");
+        element.setAttribute("focusable", "true");
+        element.setAttribute("role", "button");
+        element.setAttribute("aria-label", `${entry.direction === "in" ? "Inflow" : "Outflow"} ${entry.label}, ${this.formatValue(entry.value)}`);
+
+        element.addEventListener("click", (event: MouseEvent) => {
+            event.stopPropagation();
+            this.selectItem(entry.selectionId, event.ctrlKey || event.metaKey);
+        });
+        element.addEventListener("keydown", (event: KeyboardEvent) => {
+            if (event.key === "Enter" || event.key === " " || event.key === "Spacebar") {
+                event.preventDefault();
+                event.stopPropagation();
+                this.selectItem(entry.selectionId, event.ctrlKey || event.metaKey);
+            } else if (event.key === "ContextMenu" || (event.shiftKey && event.key === "F10")) {
+                event.preventDefault();
+                event.stopPropagation();
+                this.selectionManager.showContextMenu(entry.selectionId, this.getElementCenter(element), "source");
+            }
+        });
+        this.bindItemContextMenu(element, entry);
+        this.selectionElements.push({ element, selectionId: entry.selectionId });
+    }
+
+    private selectItem(selectionId: FlowSelectionId, multiSelect: boolean): void {
+        this.selectionManager.select(selectionId, multiSelect).then((ids) => {
+            this.selectedIds = ids as FlowSelectionId[];
+            this.updateSelectionStyles();
+        });
+    }
+
+    private clearSelection(): void {
+        this.selectionManager.clear().then(() => {
+            this.selectedIds = [];
+            this.updateSelectionStyles();
+        });
+    }
+
+    private updateSelectionStyles(): void {
+        const hasSelection = this.selectedIds.length > 0;
+
+        this.selectionElements.forEach((selectionElement) => {
+            const isSelected = hasSelection && this.isSelectionIdSelected(selectionElement.selectionId);
+            selectionElement.element.classList.toggle("flowTankSelected", isSelected);
+            selectionElement.element.classList.toggle("flowTankDimmed", hasSelection && !isSelected);
+            selectionElement.element.setAttribute("aria-pressed", isSelected ? "true" : "false");
+        });
+    }
+
+    private isSelectionIdSelected(selectionId: FlowSelectionId): boolean {
+        return this.selectedIds.some((selectedId) =>
+            selectedId.equals(selectionId) ||
+            selectedId.includes(selectionId) ||
+            selectionId.includes(selectedId)
+        );
+    }
+
+    private getElementCenter(element: SVGElement): powerbi.extensibility.IPoint {
+        const rect = element.getBoundingClientRect();
+
+        return {
+            x: rect.left + rect.width / 2,
+            y: rect.top + rect.height / 2
+        };
     }
 
     private svgElement<K extends keyof SVGElementTagNameMap>(tagName: K): SVGElementTagNameMap[K] {
