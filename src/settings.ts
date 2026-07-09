@@ -61,6 +61,16 @@ class AppearanceSettings extends FormattingSettingsCard {
         value: true
     });
 
+    balancePosition = new formattingSettings.ItemDropdown({
+        name: "balancePosition",
+        displayName: "Totals position",
+        value: { value: "top", displayName: "Top" },
+        items: [
+            { value: "top", displayName: "Top" },
+            { value: "bottom", displayName: "Bottom" }
+        ]
+    });
+
     legendPosition = new formattingSettings.ItemDropdown({
         name: "legendPosition",
         displayName: "Legend position",
@@ -90,6 +100,7 @@ class AppearanceSettings extends FormattingSettingsCard {
         this.showTankLabels,
         this.showItemLabels,
         this.showBalance,
+        this.balancePosition,
         this.legendPosition,
         this.fontSize
     ];

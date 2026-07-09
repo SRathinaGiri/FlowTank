@@ -184,10 +184,11 @@ export class Visual implements IVisual {
         const showTankLabels = this.formattingSettings.appearance.showTankLabels.value;
         const showItemLabels = this.formattingSettings.appearance.showItemLabels.value;
         const showBalance = this.formattingSettings.appearance.showBalance.value;
+        const balancePosition = this.formattingSettings.appearance.balancePosition.value.value;
         const legendPosition = this.getLegendPosition();
 
         const tankY = !showLegends ? 52 : legendPosition === "both" ? 74 : 66;
-        const tankBottomMargin = 28;
+        const tankBottomMargin = showBalance && balancePosition === "bottom" ? 52 : 28;
         const tankHeight = Math.max(260, this.viewBoxHeight - tankY - tankBottomMargin);
         const tank = !showLegends
             ? { x: 170, y: tankY, width: 460, height: tankHeight, radius: 30 }
@@ -230,16 +231,15 @@ export class Visual implements IVisual {
         if (showTankLabels && this.canShowTankLabels(tank.width, tank.height, fontSize)) {
             this.appendText(tank.x + tank.width * 0.25, tank.y + 32, "Inflow", textColor, fontSize + 2, "middle", "600");
             this.appendText(tank.x + tank.width * 0.75, tank.y + 32, "Outflow", textColor, fontSize + 2, "middle", "600");
-            this.appendText(tank.x + tank.width * 0.25, tankBottom - inFillHeight - 14, this.formatValue(summary.totalIn), textColor, fontSize, "middle", "600");
-            this.appendText(tank.x + tank.width * 0.75, tankBottom - outFillHeight - 14, this.formatValue(summary.totalOut), textColor, fontSize, "middle", "600");
         }
 
         if (showLegends) {
             this.renderLegends(legendPosition, inflowEntries, outflowEntries, summary, tank.x, tank.y, tank.width, textColor, fontSize);
         }
 
-        if (showBalance && summary.balance !== 0) {
-            this.appendText(ViewBoxWidth / 2, 35, this.getBalanceStatusText(summary), textColor, fontSize + 4, "middle", "700");
+        if (showBalance) {
+            const summaryY = balancePosition === "bottom" ? tankBottom + 25 : 35;
+            this.appendSummaryLabels(summary, summaryY, textColor, fontSize);
         }
     }
 
@@ -496,28 +496,68 @@ export class Visual implements IVisual {
         fontSize: number
     ): void {
         const labelFontSize = Math.max(8, fontSize - 1);
-        const minimumHeight = labelFontSize + 8;
+        const lineHeight = labelFontSize + 2;
+        const minimumHeight = lineHeight * 2 + 6;
 
         if (height < minimumHeight || width < labelFontSize * 7) {
             return;
         }
 
-        const label = this.truncateText(
-            `${entry.label} ${this.formatPercent(entry.value / totalValue)}`,
-            width - 12,
-            labelFontSize
-        );
+        const label = this.svgElement("text");
+        const centerX = x + width / 2;
+        const centerY = y + height / 2;
+        const nameLine = this.svgElement("tspan");
+        const percentLine = this.svgElement("tspan");
+
+        label.classList.add("flowTankLabel", "flowTankLiquidItemLabel");
+        label.setAttribute("x", centerX.toFixed(2));
+        label.setAttribute("y", (centerY - lineHeight / 2).toFixed(2));
+        label.setAttribute("fill", textColor);
+        label.setAttribute("font-size", labelFontSize.toString());
+        label.setAttribute("font-weight", "700");
+        label.setAttribute("text-anchor", "middle");
+
+        nameLine.setAttribute("x", centerX.toFixed(2));
+        nameLine.textContent = this.truncateText(entry.label, width - 12, labelFontSize);
+        percentLine.setAttribute("x", centerX.toFixed(2));
+        percentLine.setAttribute("dy", lineHeight.toString());
+        percentLine.textContent = this.formatPercent(entry.value / totalValue);
+
+        label.appendChild(nameLine);
+        label.appendChild(percentLine);
+        this.bindItemInteractions(label, entry);
+        this.svg.appendChild(label);
+    }
+
+    private appendSummaryLabels(summary: FlowSummary, y: number, textColor: string, fontSize: number): void {
+        const summaryFontSize = fontSize + 2;
 
         this.appendText(
-            x + width / 2,
-            y + height / 2,
-            label,
+            ViewBoxWidth * 0.25,
+            y,
+            `Inflow ${this.formatValue(summary.totalIn)}`,
             textColor,
-            labelFontSize,
+            summaryFontSize,
             "middle",
-            "700",
-            "flowTankLiquidItemLabel",
-            entry
+            "600"
+        );
+        this.appendText(
+            ViewBoxWidth * 0.5,
+            y,
+            this.getBalanceStatusText(summary),
+            textColor,
+            summaryFontSize + 2,
+            "middle",
+            "700"
+        );
+        this.appendText(
+            ViewBoxWidth * 0.75,
+            y,
+            `Outflow ${this.formatValue(summary.totalOut)}`,
+            textColor,
+            summaryFontSize,
+            "middle",
+            "600"
         );
     }
 

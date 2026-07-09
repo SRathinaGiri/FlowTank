@@ -94,6 +94,21 @@
                         "bool": true
                     }
                 },
+                "balancePosition": {
+                    "displayName": "Totals position",
+                    "type": {
+                        "enumeration": [
+                            {
+                                "value": "top",
+                                "displayName": "Top"
+                            },
+                            {
+                                "value": "bottom",
+                                "displayName": "Bottom"
+                            }
+                        ]
+                    }
+                },
                 "legendPosition": {
                     "displayName": "Legend position",
                     "type": {
