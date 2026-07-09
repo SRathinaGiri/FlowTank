@@ -55,6 +55,18 @@ class AppearanceSettings extends FormattingSettingsCard {
         value: false
     });
 
+    itemLabelContent = new formattingSettings.ItemDropdown({
+        name: "itemLabelContent",
+        displayName: "In-liquid label content",
+        value: { value: "labelPercentage", displayName: "Labels with percentages" },
+        items: [
+            { value: "label", displayName: "Labels only" },
+            { value: "labelValue", displayName: "Labels with values" },
+            { value: "labelPercentage", displayName: "Labels with percentages" },
+            { value: "labelValuePercentage", displayName: "Labels with values and percentages" }
+        ]
+    });
+
     showBalance = new formattingSettings.ToggleSwitch({
         name: "showBalance",
         displayName: "Show balance",
@@ -99,6 +111,7 @@ class AppearanceSettings extends FormattingSettingsCard {
         this.showLabels,
         this.showTankLabels,
         this.showItemLabels,
+        this.itemLabelContent,
         this.showBalance,
         this.balancePosition,
         this.legendPosition,

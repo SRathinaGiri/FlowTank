@@ -88,6 +88,29 @@
                         "bool": true
                     }
                 },
+                "itemLabelContent": {
+                    "displayName": "In-liquid label content",
+                    "type": {
+                        "enumeration": [
+                            {
+                                "value": "label",
+                                "displayName": "Labels only"
+                            },
+                            {
+                                "value": "labelValue",
+                                "displayName": "Labels with values"
+                            },
+                            {
+                                "value": "labelPercentage",
+                                "displayName": "Labels with percentages"
+                            },
+                            {
+                                "value": "labelValuePercentage",
+                                "displayName": "Labels with values and percentages"
+                            }
+                        ]
+                    }
+                },
                 "showBalance": {
                     "displayName": "Show balance",
                     "type": {

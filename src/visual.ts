@@ -497,7 +497,9 @@ export class Visual implements IVisual {
     ): void {
         const labelFontSize = Math.max(8, fontSize - 1);
         const lineHeight = labelFontSize + 2;
-        const minimumHeight = lineHeight * 2 + 6;
+        const labelContent = this.formattingSettings.appearance.itemLabelContent.value.value;
+        const hasSecondLine = labelContent !== "label";
+        const minimumHeight = hasSecondLine ? lineHeight * 2 + 6 : lineHeight + 6;
 
         if (height < minimumHeight || width < labelFontSize * 7) {
             return;
@@ -511,7 +513,7 @@ export class Visual implements IVisual {
 
         label.classList.add("flowTankLabel", "flowTankLiquidItemLabel");
         label.setAttribute("x", centerX.toFixed(2));
-        label.setAttribute("y", (centerY - lineHeight / 2).toFixed(2));
+        label.setAttribute("y", (hasSecondLine ? centerY - lineHeight / 2 : centerY).toFixed(2));
         label.setAttribute("fill", textColor);
         label.setAttribute("font-size", labelFontSize.toString());
         label.setAttribute("font-weight", "700");
@@ -519,12 +521,21 @@ export class Visual implements IVisual {
 
         nameLine.setAttribute("x", centerX.toFixed(2));
         nameLine.textContent = this.truncateText(entry.label, width - 12, labelFontSize);
-        percentLine.setAttribute("x", centerX.toFixed(2));
-        percentLine.setAttribute("dy", lineHeight.toString());
-        percentLine.textContent = this.formatPercent(entry.value / totalValue);
 
         label.appendChild(nameLine);
-        label.appendChild(percentLine);
+        if (hasSecondLine) {
+            const valueText = this.formatValue(entry.value);
+            const percentageText = this.formatPercent(entry.value / totalValue);
+
+            percentLine.setAttribute("x", centerX.toFixed(2));
+            percentLine.setAttribute("dy", lineHeight.toString());
+            percentLine.textContent = labelContent === "labelValue"
+                ? valueText
+                : labelContent === "labelValuePercentage"
+                    ? `${valueText} | ${percentageText}`
+                    : percentageText;
+            label.appendChild(percentLine);
+        }
         this.bindItemInteractions(label, entry);
         this.svg.appendChild(label);
     }
