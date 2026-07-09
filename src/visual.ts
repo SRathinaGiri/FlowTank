@@ -2,6 +2,10 @@
 
 import powerbi from "powerbi-visuals-api";
 import { FormattingSettingsService } from "powerbi-visuals-utils-formattingmodel";
+import {
+    displayUnitSystemType,
+    valueFormatter
+} from "powerbi-visuals-utils-formattingutils";
 import "./../style/visual.less";
 
 import VisualConstructorOptions = powerbi.extensibility.visual.VisualConstructorOptions;
@@ -84,6 +88,7 @@ const GitHubUrl = "https://github.com/SRathinaGiri/FlowTank";
 const InflowPalette = ["#86EFAC", "#7DD3FC", "#93C5FD", "#A7F3D0", "#99F6E4", "#C4B5FD"];
 const OutflowPalette = ["#FCA5A5", "#FDBA74", "#FECACA", "#F9A8D4", "#FDE68A", "#FBCFE8"];
 const LiquidTopPadding = 18;
+const DefaultValueFormat = "#,0.00";
 let visualInstanceCounter = 0;
 
 export class Visual implements IVisual {
@@ -98,6 +103,8 @@ export class Visual implements IVisual {
     private selectionElements: SelectionElement[] = [];
     private allowInteractions = true;
     private viewBoxHeight = DefaultViewBoxHeight;
+    private amountFormat = DefaultValueFormat;
+    private autoDisplayUnitValue = 0;
     private formattingSettings: VisualFormattingSettingsModel;
     private readonly formattingSettingsService: FormattingSettingsService;
 
@@ -328,6 +335,9 @@ export class Visual implements IVisual {
         const categorical = dataView && dataView.categorical;
         const values = categorical && categorical.values;
 
+        this.amountFormat = DefaultValueFormat;
+        this.autoDisplayUnitValue = 0;
+
         if (!categorical || !values || !values.length) {
             return empty;
         }
@@ -341,6 +351,7 @@ export class Visual implements IVisual {
             return empty;
         }
 
+        this.amountFormat = amountColumn.source.format || DefaultValueFormat;
         const aggregated = new Map<string, FlowItem>();
 
         amountColumn.values.forEach((rawValue, index) => {
@@ -370,6 +381,7 @@ export class Visual implements IVisual {
         const outflows = items.filter((item) => item.direction === "out");
         const totalIn = inflows.reduce((sum, item) => sum + item.value, 0);
         const totalOut = outflows.reduce((sum, item) => sum + item.value, 0);
+        this.autoDisplayUnitValue = Math.max(totalIn, totalOut, ...items.map((item) => item.value));
 
         return {
             inflows,
@@ -1134,27 +1146,29 @@ export class Visual implements IVisual {
             this.formattingSettings.numberFormatting.valueDecimalPlaces.value
         );
         const displayUnits = this.formattingSettings.numberFormatting.displayUnits.value.value;
+        const cultureSelector = this.host.locale;
 
-        if (displayUnits === "auto") {
-            return new Intl.NumberFormat(undefined, {
-                notation: "compact",
-                minimumFractionDigits: 0,
-                maximumFractionDigits: decimalPlaces
-            }).format(value);
+        if (displayUnits === "none") {
+            return valueFormatter.format(value, this.amountFormat, true, cultureSelector);
         }
 
-        const units: Record<string, { divisor: number; suffix: string }> = {
-            none: { divisor: 1, suffix: "" },
-            thousands: { divisor: 1_000, suffix: "K" },
-            millions: { divisor: 1_000_000, suffix: "M" },
-            billions: { divisor: 1_000_000_000, suffix: "B" }
+        const unitValues: Record<string, number> = {
+            thousands: 1_000,
+            millions: 1_000_000,
+            billions: 1_000_000_000
         };
-        const unit = units[displayUnits] || units.none;
+        const unitValue = displayUnits === "auto"
+            ? this.autoDisplayUnitValue
+            : unitValues[displayUnits] || 0;
+        const formatter = valueFormatter.create({
+            format: this.amountFormat,
+            value: unitValue,
+            precision: decimalPlaces,
+            cultureSelector,
+            displayUnitSystemType: displayUnitSystemType.DisplayUnitSystemType.DataLabels
+        });
 
-        return new Intl.NumberFormat(undefined, {
-            minimumFractionDigits: decimalPlaces,
-            maximumFractionDigits: decimalPlaces
-        }).format(value / unit.divisor) + unit.suffix;
+        return formatter.format(value);
     }
 
     private formatSignedValue(value: number): string {
