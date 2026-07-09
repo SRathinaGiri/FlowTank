@@ -1,7 +1,7 @@
 {
   "name": "flow-tank",
   "description": "Power BI custom visual for comparing multiple inflows, outflows, and resulting balance in a tank view.",
-  "version": "1.0.0.0",
+  "version": "1.0.0.1",
   "repository": {
     "type": "git",
     "url": "https://github.com/SRathinaGiri/FlowTank.git"
