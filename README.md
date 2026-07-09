@@ -22,6 +22,14 @@ FlowTank is a Microsoft Power BI custom visual for comparing multiple inflows, m
 
 If **Direction** is not supplied, positive amounts are treated as inflow and negative amounts are treated as outflow.
 
+## Number Formatting
+
+FlowTank uses the Power BI format string assigned to the **Amount** field. Currency symbols, decimal precision, negative-value patterns, and grouping patterns are applied consistently to totals, legends, in-liquid labels, tooltips, and accessibility text.
+
+The visual also supports grouping sequences encoded in custom format strings, including standard thousands grouping and lakh/crore grouping. For example, a format pattern with repeated two-digit secondary groups can display `14636000` as `1,46,36,000`.
+
+Power BI provides custom visuals with the Power BI interface locale, which can differ from the report's separate regional format locale. To reproduce nonstandard grouping reliably, define the required grouping in the **Amount** field or measure format string. Use **Display units: None** when the original Power BI format should be shown without automatic scaling.
+
 ## Sample Files
 
 Sample assets are included for AppSource validation and user evaluation:
