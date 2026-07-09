@@ -1149,7 +1149,9 @@ export class Visual implements IVisual {
         const cultureSelector = this.getValueCulture();
 
         if (displayUnits === "none") {
-            return valueFormatter.format(value, this.amountFormat, true, cultureSelector);
+            const formatted = valueFormatter.format(value, this.amountFormat, true, cultureSelector);
+
+            return this.applyFormatStringGrouping(formatted);
         }
 
         const unitValues: Record<string, number> = {
@@ -1168,11 +1170,81 @@ export class Visual implements IVisual {
             displayUnitSystemType: displayUnitSystemType.DisplayUnitSystemType.DataLabels
         });
 
-        return formatter.format(value);
+        return this.applyFormatStringGrouping(formatter.format(value));
     }
 
     private getValueCulture(): string {
-        return this.amountFormat.includes("\u20B9") ? "en-IN" : this.host.locale;
+        return this.host.locale;
+    }
+
+    private applyFormatStringGrouping(formattedValue: string): string {
+        const groupSizes = this.getFormatStringGroupSizes();
+        if (groupSizes.length < 2) {
+            return formattedValue;
+        }
+
+        return formattedValue.replace(/\d[\d\s,.'\u2019]*\d|\d/, (numberText) => {
+            const decimalPattern = this.getPositiveFormatSection().match(/\.([0#?]+)/);
+            const maximumDecimalPlaces = decimalPattern ? decimalPattern[1].length : 0;
+            const lastSeparatorIndex = Math.max(
+                numberText.lastIndexOf("."),
+                numberText.lastIndexOf(",")
+            );
+            const trailingDigits = lastSeparatorIndex >= 0
+                ? numberText.slice(lastSeparatorIndex + 1).replace(/\D/g, "").length
+                : 0;
+            const hasDecimalPart = maximumDecimalPlaces > 0 &&
+                lastSeparatorIndex >= 0 &&
+                trailingDigits <= maximumDecimalPlaces;
+            const integerText = hasDecimalPart
+                ? numberText.slice(0, lastSeparatorIndex)
+                : numberText;
+            const decimalText = hasDecimalPart
+                ? numberText.slice(lastSeparatorIndex)
+                : "";
+            const digits = integerText.replace(/\D/g, "");
+            const groupingSeparator = (integerText.match(/\D/) || [","])[0];
+
+            return this.groupDigits(digits, groupSizes, groupingSeparator) + decimalText;
+        });
+    }
+
+    private getFormatStringGroupSizes(): number[] {
+        const numericPattern = this.getPositiveFormatSection()
+            .replace(/"[^"]*"/g, "")
+            .match(/[0#?]+(?:,[0#?]+)+(?:\.[0#?]+)?/);
+        if (!numericPattern) {
+            return [];
+        }
+
+        const groups = numericPattern[0].split(".")[0].split(",");
+        const sizes = [groups[groups.length - 1].length];
+
+        for (let index = groups.length - 2; index > 0; index -= 1) {
+            sizes.push(groups[index].length);
+        }
+
+        return sizes;
+    }
+
+    private getPositiveFormatSection(): string {
+        return this.amountFormat.split(";")[0];
+    }
+
+    private groupDigits(digits: string, groupSizes: number[], separator: string): string {
+        const groups: string[] = [];
+        let end = digits.length;
+        let sizeIndex = 0;
+
+        while (end > 0) {
+            const size = groupSizes[Math.min(sizeIndex, groupSizes.length - 1)];
+            const start = Math.max(0, end - size);
+            groups.unshift(digits.slice(start, end));
+            end = start;
+            sizeIndex += 1;
+        }
+
+        return groups.join(separator);
     }
 
     private formatSignedValue(value: number): string {
