@@ -1146,7 +1146,7 @@ export class Visual implements IVisual {
             this.formattingSettings.numberFormatting.valueDecimalPlaces.value
         );
         const displayUnits = this.formattingSettings.numberFormatting.displayUnits.value.value;
-        const cultureSelector = this.host.locale;
+        const cultureSelector = this.getValueCulture();
 
         if (displayUnits === "none") {
             return valueFormatter.format(value, this.amountFormat, true, cultureSelector);
@@ -1169,6 +1169,10 @@ export class Visual implements IVisual {
         });
 
         return formatter.format(value);
+    }
+
+    private getValueCulture(): string {
+        return this.amountFormat.includes("\u20B9") ? "en-IN" : this.host.locale;
     }
 
     private formatSignedValue(value: number): string {
