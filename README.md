@@ -36,6 +36,7 @@ Sample assets are included for AppSource validation and user evaluation:
 
 - `sample-data/flowtank_sample_financials.csv`
 - `sample-data/flowtank_sample.pbix`
+- `FlowTankScreenshot.png`
 
 The CSV includes `Year` and `Region` dimensions in addition to the FlowTank field-well columns. Use `Region` in a slicer or another visual to validate inbound cross-filtering and cross-highlighting behavior.
 
