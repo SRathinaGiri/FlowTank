@@ -252,7 +252,7 @@ export class Visual implements IVisual {
 
         if (showBalance) {
             const summaryY = balancePosition === "bottom" ? tankBottom + 25 : 35;
-            this.appendSummaryLabels(summary, summaryY, textColor, fontSize);
+            this.appendSummaryLabels(summary, summaryY, tank.x, tank.width, textColor, fontSize);
         }
     }
 
@@ -581,11 +581,11 @@ export class Visual implements IVisual {
         this.svg.appendChild(label);
     }
 
-    private appendSummaryLabels(summary: FlowSummary, y: number, textColor: string, fontSize: number): void {
+    private appendSummaryLabels(summary: FlowSummary, y: number, tankX: number, tankWidth: number, textColor: string, fontSize: number): void {
         const summaryFontSize = fontSize + 2;
 
         this.appendSummaryLabelBlock(
-            ViewBoxWidth * 0.25,
+            tankX + tankWidth * 0.25,
             y,
             "Inflow",
             this.formatValue(summary.totalIn),
@@ -594,7 +594,7 @@ export class Visual implements IVisual {
             "600"
         );
         this.appendSummaryLabelBlock(
-            ViewBoxWidth * 0.5,
+            tankX + tankWidth * 0.5,
             y,
             this.getBalanceStatusLabel(summary),
             this.formatValue(Math.abs(summary.balance)),
@@ -603,7 +603,7 @@ export class Visual implements IVisual {
             "700"
         );
         this.appendSummaryLabelBlock(
-            ViewBoxWidth * 0.75,
+            tankX + tankWidth * 0.75,
             y,
             "Outflow",
             this.formatValue(summary.totalOut),
