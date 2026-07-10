@@ -1,61 +1,241 @@
-Year,Source,Direction,Amount
-2021,Product Sales,Inflow,1250000
-2021,Services Revenue,Inflow,430000
-2021,Subscriptions,Inflow,215000
-2021,Partner Income,Inflow,85000
-2021,Interest Income,Inflow,18000
-2021,Raw Materials,Outflow,-390000
-2021,Payroll,Outflow,-520000
-2021,Sales and Marketing,Outflow,-185000
-2021,Operations,Outflow,-142000
-2021,Technology,Outflow,-76000
-2021,Rent and Utilities,Outflow,-98000
-2021,Taxes and Compliance,Outflow,-64000
-2022,Product Sales,Inflow,1410000
-2022,Services Revenue,Inflow,510000
-2022,Subscriptions,Inflow,305000
-2022,Partner Income,Inflow,96000
-2022,Interest Income,Inflow,22000
-2022,Raw Materials,Outflow,-438000
-2022,Payroll,Outflow,-590000
-2022,Sales and Marketing,Outflow,-230000
-2022,Operations,Outflow,-158000
-2022,Technology,Outflow,-104000
-2022,Rent and Utilities,Outflow,-106000
-2022,Taxes and Compliance,Outflow,-78000
-2023,Product Sales,Inflow,1685000
-2023,Services Revenue,Inflow,620000
-2023,Subscriptions,Inflow,445000
-2023,Partner Income,Inflow,124000
-2023,Interest Income,Inflow,36000
-2023,Raw Materials,Outflow,-548000
-2023,Payroll,Outflow,-710000
-2023,Sales and Marketing,Outflow,-310000
-2023,Operations,Outflow,-196000
-2023,Technology,Outflow,-155000
-2023,Rent and Utilities,Outflow,-118000
-2023,Taxes and Compliance,Outflow,-103000
-2024,Product Sales,Inflow,1870000
-2024,Services Revenue,Inflow,735000
-2024,Subscriptions,Inflow,610000
-2024,Partner Income,Inflow,142000
-2024,Interest Income,Inflow,52000
-2024,Raw Materials,Outflow,-612000
-2024,Payroll,Outflow,-842000
-2024,Sales and Marketing,Outflow,-385000
-2024,Operations,Outflow,-238000
-2024,Technology,Outflow,-218000
-2024,Rent and Utilities,Outflow,-132000
-2024,Taxes and Compliance,Outflow,-126000
-2025,Product Sales,Inflow,2095000
-2025,Services Revenue,Inflow,860000
-2025,Subscriptions,Inflow,785000
-2025,Partner Income,Inflow,178000
-2025,Interest Income,Inflow,58000
-2025,Raw Materials,Outflow,-704000
-2025,Payroll,Outflow,-965000
-2025,Sales and Marketing,Outflow,-452000
-2025,Operations,Outflow,-276000
-2025,Technology,Outflow,-285000
-2025,Rent and Utilities,Outflow,-148000
-2025,Taxes and Compliance,Outflow,-161000
+Year,Region,Source,Direction,Amount
+2021,North,Product Sales,Inflow,400000
+2021,South,Product Sales,Inflow,350000
+2021,West,Product Sales,Inflow,300000
+2021,East,Product Sales,Inflow,200000
+2021,North,Services Revenue,Inflow,137600
+2021,South,Services Revenue,Inflow,120400
+2021,West,Services Revenue,Inflow,103200
+2021,East,Services Revenue,Inflow,68800
+2021,North,Subscriptions,Inflow,68800
+2021,South,Subscriptions,Inflow,60200
+2021,West,Subscriptions,Inflow,51600
+2021,East,Subscriptions,Inflow,34400
+2021,North,Partner Income,Inflow,27200
+2021,South,Partner Income,Inflow,23800
+2021,West,Partner Income,Inflow,20400
+2021,East,Partner Income,Inflow,13600
+2021,North,Interest Income,Inflow,5760
+2021,South,Interest Income,Inflow,5040
+2021,West,Interest Income,Inflow,4320
+2021,East,Interest Income,Inflow,2880
+2021,North,Raw Materials,Outflow,-124800
+2021,South,Raw Materials,Outflow,-109200
+2021,West,Raw Materials,Outflow,-93600
+2021,East,Raw Materials,Outflow,-62400
+2021,North,Payroll,Outflow,-166400
+2021,South,Payroll,Outflow,-145600
+2021,West,Payroll,Outflow,-124800
+2021,East,Payroll,Outflow,-83200
+2021,North,Sales and Marketing,Outflow,-59200
+2021,South,Sales and Marketing,Outflow,-51800
+2021,West,Sales and Marketing,Outflow,-44400
+2021,East,Sales and Marketing,Outflow,-29600
+2021,North,Operations,Outflow,-45440
+2021,South,Operations,Outflow,-39760
+2021,West,Operations,Outflow,-34080
+2021,East,Operations,Outflow,-22720
+2021,North,Technology,Outflow,-24320
+2021,South,Technology,Outflow,-21280
+2021,West,Technology,Outflow,-18240
+2021,East,Technology,Outflow,-12160
+2021,North,Rent and Utilities,Outflow,-31360
+2021,South,Rent and Utilities,Outflow,-27440
+2021,West,Rent and Utilities,Outflow,-23520
+2021,East,Rent and Utilities,Outflow,-15680
+2021,North,Taxes and Compliance,Outflow,-20480
+2021,South,Taxes and Compliance,Outflow,-17920
+2021,West,Taxes and Compliance,Outflow,-15360
+2021,East,Taxes and Compliance,Outflow,-10240
+2022,North,Product Sales,Inflow,451200
+2022,South,Product Sales,Inflow,394800
+2022,West,Product Sales,Inflow,338400
+2022,East,Product Sales,Inflow,225600
+2022,North,Services Revenue,Inflow,163200
+2022,South,Services Revenue,Inflow,142800
+2022,West,Services Revenue,Inflow,122400
+2022,East,Services Revenue,Inflow,81600
+2022,North,Subscriptions,Inflow,97600
+2022,South,Subscriptions,Inflow,85400
+2022,West,Subscriptions,Inflow,73200
+2022,East,Subscriptions,Inflow,48800
+2022,North,Partner Income,Inflow,30720
+2022,South,Partner Income,Inflow,26880
+2022,West,Partner Income,Inflow,23040
+2022,East,Partner Income,Inflow,15360
+2022,North,Interest Income,Inflow,7040
+2022,South,Interest Income,Inflow,6160
+2022,West,Interest Income,Inflow,5280
+2022,East,Interest Income,Inflow,3520
+2022,North,Raw Materials,Outflow,-140160
+2022,South,Raw Materials,Outflow,-122640
+2022,West,Raw Materials,Outflow,-105120
+2022,East,Raw Materials,Outflow,-70080
+2022,North,Payroll,Outflow,-188800
+2022,South,Payroll,Outflow,-165200
+2022,West,Payroll,Outflow,-141600
+2022,East,Payroll,Outflow,-94400
+2022,North,Sales and Marketing,Outflow,-73600
+2022,South,Sales and Marketing,Outflow,-64400
+2022,West,Sales and Marketing,Outflow,-55200
+2022,East,Sales and Marketing,Outflow,-36800
+2022,North,Operations,Outflow,-50560
+2022,South,Operations,Outflow,-44240
+2022,West,Operations,Outflow,-37920
+2022,East,Operations,Outflow,-25280
+2022,North,Technology,Outflow,-33280
+2022,South,Technology,Outflow,-29120
+2022,West,Technology,Outflow,-24960
+2022,East,Technology,Outflow,-16640
+2022,North,Rent and Utilities,Outflow,-33920
+2022,South,Rent and Utilities,Outflow,-29680
+2022,West,Rent and Utilities,Outflow,-25440
+2022,East,Rent and Utilities,Outflow,-16960
+2022,North,Taxes and Compliance,Outflow,-24960
+2022,South,Taxes and Compliance,Outflow,-21840
+2022,West,Taxes and Compliance,Outflow,-18720
+2022,East,Taxes and Compliance,Outflow,-12480
+2023,North,Product Sales,Inflow,539200
+2023,South,Product Sales,Inflow,471800
+2023,West,Product Sales,Inflow,404400
+2023,East,Product Sales,Inflow,269600
+2023,North,Services Revenue,Inflow,198400
+2023,South,Services Revenue,Inflow,173600
+2023,West,Services Revenue,Inflow,148800
+2023,East,Services Revenue,Inflow,99200
+2023,North,Subscriptions,Inflow,142400
+2023,South,Subscriptions,Inflow,124600
+2023,West,Subscriptions,Inflow,106800
+2023,East,Subscriptions,Inflow,71200
+2023,North,Partner Income,Inflow,39680
+2023,South,Partner Income,Inflow,34720
+2023,West,Partner Income,Inflow,29760
+2023,East,Partner Income,Inflow,19840
+2023,North,Interest Income,Inflow,11520
+2023,South,Interest Income,Inflow,10080
+2023,West,Interest Income,Inflow,8640
+2023,East,Interest Income,Inflow,5760
+2023,North,Raw Materials,Outflow,-175360
+2023,South,Raw Materials,Outflow,-153440
+2023,West,Raw Materials,Outflow,-131520
+2023,East,Raw Materials,Outflow,-87680
+2023,North,Payroll,Outflow,-227200
+2023,South,Payroll,Outflow,-198800
+2023,West,Payroll,Outflow,-170400
+2023,East,Payroll,Outflow,-113600
+2023,North,Sales and Marketing,Outflow,-99200
+2023,South,Sales and Marketing,Outflow,-86800
+2023,West,Sales and Marketing,Outflow,-74400
+2023,East,Sales and Marketing,Outflow,-49600
+2023,North,Operations,Outflow,-62720
+2023,South,Operations,Outflow,-54880
+2023,West,Operations,Outflow,-47040
+2023,East,Operations,Outflow,-31360
+2023,North,Technology,Outflow,-49600
+2023,South,Technology,Outflow,-43400
+2023,West,Technology,Outflow,-37200
+2023,East,Technology,Outflow,-24800
+2023,North,Rent and Utilities,Outflow,-37760
+2023,South,Rent and Utilities,Outflow,-33040
+2023,West,Rent and Utilities,Outflow,-28320
+2023,East,Rent and Utilities,Outflow,-18880
+2023,North,Taxes and Compliance,Outflow,-32960
+2023,South,Taxes and Compliance,Outflow,-28840
+2023,West,Taxes and Compliance,Outflow,-24720
+2023,East,Taxes and Compliance,Outflow,-16480
+2024,North,Product Sales,Inflow,598400
+2024,South,Product Sales,Inflow,523600
+2024,West,Product Sales,Inflow,448800
+2024,East,Product Sales,Inflow,299200
+2024,North,Services Revenue,Inflow,235200
+2024,South,Services Revenue,Inflow,205800
+2024,West,Services Revenue,Inflow,176400
+2024,East,Services Revenue,Inflow,117600
+2024,North,Subscriptions,Inflow,195200
+2024,South,Subscriptions,Inflow,170800
+2024,West,Subscriptions,Inflow,146400
+2024,East,Subscriptions,Inflow,97600
+2024,North,Partner Income,Inflow,45440
+2024,South,Partner Income,Inflow,39760
+2024,West,Partner Income,Inflow,34080
+2024,East,Partner Income,Inflow,22720
+2024,North,Interest Income,Inflow,16640
+2024,South,Interest Income,Inflow,14560
+2024,West,Interest Income,Inflow,12480
+2024,East,Interest Income,Inflow,8320
+2024,North,Raw Materials,Outflow,-195840
+2024,South,Raw Materials,Outflow,-171360
+2024,West,Raw Materials,Outflow,-146880
+2024,East,Raw Materials,Outflow,-97920
+2024,North,Payroll,Outflow,-269440
+2024,South,Payroll,Outflow,-235760
+2024,West,Payroll,Outflow,-202080
+2024,East,Payroll,Outflow,-134720
+2024,North,Sales and Marketing,Outflow,-123200
+2024,South,Sales and Marketing,Outflow,-107800
+2024,West,Sales and Marketing,Outflow,-92400
+2024,East,Sales and Marketing,Outflow,-61600
+2024,North,Operations,Outflow,-76160
+2024,South,Operations,Outflow,-66640
+2024,West,Operations,Outflow,-57120
+2024,East,Operations,Outflow,-38080
+2024,North,Technology,Outflow,-69760
+2024,South,Technology,Outflow,-61040
+2024,West,Technology,Outflow,-52320
+2024,East,Technology,Outflow,-34880
+2024,North,Rent and Utilities,Outflow,-42240
+2024,South,Rent and Utilities,Outflow,-36960
+2024,West,Rent and Utilities,Outflow,-31680
+2024,East,Rent and Utilities,Outflow,-21120
+2024,North,Taxes and Compliance,Outflow,-40320
+2024,South,Taxes and Compliance,Outflow,-35280
+2024,West,Taxes and Compliance,Outflow,-30240
+2024,East,Taxes and Compliance,Outflow,-20160
+2025,North,Product Sales,Inflow,670400
+2025,South,Product Sales,Inflow,586600
+2025,West,Product Sales,Inflow,502800
+2025,East,Product Sales,Inflow,335200
+2025,North,Services Revenue,Inflow,275200
+2025,South,Services Revenue,Inflow,240800
+2025,West,Services Revenue,Inflow,206400
+2025,East,Services Revenue,Inflow,137600
+2025,North,Subscriptions,Inflow,251200
+2025,South,Subscriptions,Inflow,219800
+2025,West,Subscriptions,Inflow,188400
+2025,East,Subscriptions,Inflow,125600
+2025,North,Partner Income,Inflow,56960
+2025,South,Partner Income,Inflow,49840
+2025,West,Partner Income,Inflow,42720
+2025,East,Partner Income,Inflow,28480
+2025,North,Interest Income,Inflow,18560
+2025,South,Interest Income,Inflow,16240
+2025,West,Interest Income,Inflow,13920
+2025,East,Interest Income,Inflow,9280
+2025,North,Raw Materials,Outflow,-225280
+2025,South,Raw Materials,Outflow,-197120
+2025,West,Raw Materials,Outflow,-168960
+2025,East,Raw Materials,Outflow,-112640
+2025,North,Payroll,Outflow,-308800
+2025,South,Payroll,Outflow,-270200
+2025,West,Payroll,Outflow,-231600
+2025,East,Payroll,Outflow,-154400
+2025,North,Sales and Marketing,Outflow,-144640
+2025,South,Sales and Marketing,Outflow,-126560
+2025,West,Sales and Marketing,Outflow,-108480
+2025,East,Sales and Marketing,Outflow,-72320
+2025,North,Operations,Outflow,-88320
+2025,South,Operations,Outflow,-77280
+2025,West,Operations,Outflow,-66240
+2025,East,Operations,Outflow,-44160
+2025,North,Technology,Outflow,-91200
+2025,South,Technology,Outflow,-79800
+2025,West,Technology,Outflow,-68400
+2025,East,Technology,Outflow,-45600
+2025,North,Rent and Utilities,Outflow,-47360
+2025,South,Rent and Utilities,Outflow,-41440
+2025,West,Rent and Utilities,Outflow,-35520
+2025,East,Rent and Utilities,Outflow,-23680
+2025,North,Taxes and Compliance,Outflow,-51520
+2025,South,Taxes and Compliance,Outflow,-45080
+2025,West,Taxes and Compliance,Outflow,-38640
+2025,East,Taxes and Compliance,Outflow,-25760
