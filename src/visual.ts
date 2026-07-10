@@ -25,6 +25,8 @@ type FlowSelectionId = powerbi.extensibility.ISelectionId & powerbi.visuals.ISel
 interface FlowItem {
     label: string;
     value: number;
+    highlightedValue: number;
+    hasHighlights: boolean;
     direction: FlowDirection;
     selectionId: FlowSelectionId;
 }
@@ -38,6 +40,7 @@ interface FlowSummary {
     totalIn: number;
     totalOut: number;
     balance: number;
+    hasHighlights: boolean;
 }
 
 interface Point {
@@ -49,6 +52,9 @@ interface PipeEntry {
     direction: FlowDirection;
     label: string;
     value: number;
+    highlightedValue: number;
+    highlightRatio: number;
+    hasHighlights: boolean;
     selectionId: FlowSelectionId;
     color: string;
     y: number;
@@ -289,6 +295,9 @@ export class Visual implements IVisual {
                 direction,
                 label: item.label,
                 value: item.value,
+                highlightedValue: item.highlightedValue,
+                highlightRatio: item.value > 0 ? this.clamp(item.highlightedValue / item.value, 0, 1) : 0,
+                hasHighlights: item.hasHighlights,
                 selectionId: item.selectionId,
                 color,
                 y,
@@ -331,7 +340,7 @@ export class Visual implements IVisual {
     }
 
     private getFlowSummary(dataView?: DataView): FlowSummary {
-        const empty: FlowSummary = { inflows: [], outflows: [], totalIn: 0, totalOut: 0, balance: 0 };
+        const empty: FlowSummary = { inflows: [], outflows: [], totalIn: 0, totalOut: 0, balance: 0, hasHighlights: false };
         const categorical = dataView && dataView.categorical;
         const values = categorical && categorical.values;
 
@@ -355,28 +364,34 @@ export class Visual implements IVisual {
         const aggregated = new Map<string, FlowItem>();
 
         const highlightedValues = amountColumn.highlights;
-        const useHighlightedValues = Boolean(highlightedValues && highlightedValues.length);
-        const sourceValues = useHighlightedValues ? highlightedValues : amountColumn.values;
+        const hasHighlights = Boolean(
+            highlightedValues &&
+            highlightedValues.length &&
+            highlightedValues.some((value) => value !== null && value !== undefined)
+        );
 
-        sourceValues.forEach((rawValue, index) => {
+        amountColumn.values.forEach((rawValue, index) => {
             const numericValue = this.toNumber(rawValue);
             if (!Number.isFinite(numericValue) || numericValue === 0) {
                 return;
             }
 
+            const highlightedNumericValue = hasHighlights ? this.toNumber(highlightedValues && highlightedValues[index]) : 0;
             const directionValue = this.toText(directionCategory && directionCategory.values[index]);
             const sourceValue = this.toText(sourceCategory && sourceCategory.values[index]);
             const direction = this.classifyDirection(directionValue, numericValue);
             const label = sourceValue || directionValue || `Flow ${index + 1}`;
             const value = Math.abs(numericValue);
+            const highlightedValue = Number.isFinite(highlightedNumericValue) ? Math.abs(highlightedNumericValue) : 0;
             const key = `${direction}|${label}`;
             const existing = aggregated.get(key);
             const selectionId = this.createItemSelectionId(sourceCategory, directionCategory, amountColumn, index);
 
             if (existing) {
                 existing.value += value;
+                existing.highlightedValue += highlightedValue;
             } else {
-                aggregated.set(key, { label, value, direction, selectionId });
+                aggregated.set(key, { label, value, highlightedValue, hasHighlights, direction, selectionId });
             }
         });
 
@@ -392,7 +407,8 @@ export class Visual implements IVisual {
             outflows,
             totalIn,
             totalOut,
-            balance: totalIn - totalOut
+            balance: totalIn - totalOut,
+            hasHighlights
         };
     }
 
@@ -447,6 +463,15 @@ export class Visual implements IVisual {
         pipe.setAttribute("stroke-width", width.toFixed(2));
         this.bindItemInteractions(pipe, entry);
         this.svg.appendChild(pipe);
+
+        if (entry.hasHighlights && entry.highlightRatio > 0) {
+            const highlightPipe = this.svgElement("path");
+            highlightPipe.classList.add("flowTankPipe", "flowTankHighlightOverlay");
+            highlightPipe.setAttribute("d", pathData);
+            highlightPipe.setAttribute("stroke", color);
+            highlightPipe.setAttribute("stroke-width", Math.max(2, width * entry.highlightRatio).toFixed(2));
+            this.svg.appendChild(highlightPipe);
+        }
     }
 
     private appendTankFill(parent: SVGElement, x: number, y: number, width: number, height: number, radius: number): void {
@@ -702,13 +727,27 @@ export class Visual implements IVisual {
             return;
         }
 
+        const liquid = this.createLiquidPath(x, y, width, height, entry.color, waveTop);
+        this.bindItemInteractions(liquid, entry);
+        parent.appendChild(liquid);
+
+        if (entry.hasHighlights && entry.highlightRatio > 0) {
+            const highlightedHeight = height * entry.highlightRatio;
+            const highlightY = y + height - highlightedHeight;
+            const highlightLiquid = this.createLiquidPath(x, highlightY, width, highlightedHeight, entry.color, entry.highlightRatio > 0.98 && waveTop);
+            highlightLiquid.classList.add("flowTankHighlightOverlay");
+            parent.appendChild(highlightLiquid);
+        }
+    }
+
+    private createLiquidPath(x: number, y: number, width: number, height: number, color: string, waveTop: boolean): SVGPathElement {
         const bottom = y + height;
         const wave = Math.min(12, Math.max(3, height * 0.08));
         const liquid = this.svgElement("path");
         liquid.classList.add("flowTankLiquid");
         liquid.setAttribute("clip-path", `url(#${this.tankClipPathId})`);
-        liquid.setAttribute("fill", entry.color);
-        liquid.setAttribute("stroke", entry.color);
+        liquid.setAttribute("fill", color);
+        liquid.setAttribute("stroke", color);
         liquid.setAttribute("stroke-width", "1.5");
         liquid.setAttribute("vector-effect", "non-scaling-stroke");
         const topPath = waveTop
@@ -718,8 +757,8 @@ export class Visual implements IVisual {
             ].join(" ")
             : `M ${x.toFixed(2)} ${y.toFixed(2)} L ${(x + width).toFixed(2)} ${y.toFixed(2)}`;
         liquid.setAttribute("d", `${topPath} L ${(x + width).toFixed(2)} ${bottom.toFixed(2)} L ${x.toFixed(2)} ${bottom.toFixed(2)} Z`);
-        this.bindItemInteractions(liquid, entry);
-        parent.appendChild(liquid);
+
+        return liquid;
     }
 
     private appendTankBorder(parent: SVGElement, x: number, y: number, width: number, height: number, radius: number, gaps: TankBorderGap[]): void {
@@ -888,6 +927,10 @@ export class Visual implements IVisual {
 
     private bindItemInteractions(element: SVGElement, entry: PipeEntry): void {
         element.classList.add("flowTankSelectable");
+        if (entry.hasHighlights) {
+            element.classList.add("flowTankCrossHighlightBase");
+            element.classList.toggle("flowTankCrossHighlightDimmed", entry.highlightRatio <= 0);
+        }
         element.setAttribute("tabindex", "0");
         element.setAttribute("focusable", "true");
         element.setAttribute("role", "button");
@@ -1100,7 +1143,7 @@ export class Visual implements IVisual {
     }
 
     private getTooltipDataItems(entry: PipeEntry): powerbi.extensibility.VisualTooltipDataItem[] {
-        return [
+        const dataItems: powerbi.extensibility.VisualTooltipDataItem[] = [
             {
                 displayName: "Direction",
                 value: entry.direction === "in" ? "Inflow" : "Outflow",
@@ -1113,12 +1156,24 @@ export class Visual implements IVisual {
             {
                 displayName: "Amount",
                 value: this.formatValue(entry.value)
-            },
+            }
+        ];
+
+        if (entry.hasHighlights) {
+            dataItems.push({
+                displayName: "Highlighted amount",
+                value: this.formatValue(entry.highlightedValue)
+            });
+        }
+
+        dataItems.push(
             {
                 displayName: "Share",
                 value: this.formatPercent(entry.percent)
             }
-        ];
+        );
+
+        return dataItems;
     }
 
     private svgElement<K extends keyof SVGElementTagNameMap>(tagName: K): SVGElementTagNameMap[K] {
