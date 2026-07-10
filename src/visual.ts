@@ -354,7 +354,11 @@ export class Visual implements IVisual {
         this.amountFormat = amountColumn.source.format || DefaultValueFormat;
         const aggregated = new Map<string, FlowItem>();
 
-        amountColumn.values.forEach((rawValue, index) => {
+        const highlightedValues = amountColumn.highlights;
+        const useHighlightedValues = Boolean(highlightedValues && highlightedValues.length);
+        const sourceValues = useHighlightedValues ? highlightedValues : amountColumn.values;
+
+        sourceValues.forEach((rawValue, index) => {
             const numericValue = this.toNumber(rawValue);
             if (!Number.isFinite(numericValue) || numericValue === 0) {
                 return;
