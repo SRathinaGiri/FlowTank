@@ -584,33 +584,67 @@ export class Visual implements IVisual {
     private appendSummaryLabels(summary: FlowSummary, y: number, textColor: string, fontSize: number): void {
         const summaryFontSize = fontSize + 2;
 
-        this.appendText(
+        this.appendSummaryLabelBlock(
             ViewBoxWidth * 0.25,
             y,
-            `Inflow ${this.formatValue(summary.totalIn)}`,
+            "Inflow",
+            this.formatValue(summary.totalIn),
             textColor,
             summaryFontSize,
-            "middle",
             "600"
         );
-        this.appendText(
+        this.appendSummaryLabelBlock(
             ViewBoxWidth * 0.5,
             y,
-            this.getBalanceStatusText(summary),
+            this.getBalanceStatusLabel(summary),
+            this.formatValue(Math.abs(summary.balance)),
             textColor,
             summaryFontSize + 2,
-            "middle",
             "700"
         );
-        this.appendText(
+        this.appendSummaryLabelBlock(
             ViewBoxWidth * 0.75,
             y,
-            `Outflow ${this.formatValue(summary.totalOut)}`,
+            "Outflow",
+            this.formatValue(summary.totalOut),
             textColor,
             summaryFontSize,
-            "middle",
             "600"
         );
+    }
+
+    private appendSummaryLabelBlock(
+        x: number,
+        y: number,
+        labelText: string,
+        valueText: string,
+        color: string,
+        fontSize: number,
+        weight: string
+    ): void {
+        const lineHeight = fontSize + 3;
+        const text = this.svgElement("text");
+        const label = this.svgElement("tspan");
+        const value = this.svgElement("tspan");
+
+        text.classList.add("flowTankLabel", "flowTankSummaryLabel");
+        text.setAttribute("x", x.toFixed(2));
+        text.setAttribute("y", (y - lineHeight / 2).toFixed(2));
+        text.setAttribute("fill", color);
+        text.setAttribute("font-size", fontSize.toString());
+        text.setAttribute("font-weight", weight);
+        text.setAttribute("text-anchor", "middle");
+
+        label.setAttribute("x", x.toFixed(2));
+        label.textContent = labelText;
+        text.appendChild(label);
+
+        value.setAttribute("x", x.toFixed(2));
+        value.setAttribute("dy", lineHeight.toString());
+        value.textContent = valueText;
+        text.appendChild(value);
+
+        this.svg.appendChild(text);
     }
 
     private renderLegends(
@@ -1315,12 +1349,12 @@ export class Visual implements IVisual {
         return `${entry.label} ${this.formatValue(entry.value)} - ${this.formatPercent(entry.percent)}`;
     }
 
-    private getBalanceStatusText(summary: FlowSummary): string {
+    private getBalanceStatusLabel(summary: FlowSummary): string {
         if (summary.balance === 0) {
-            return "Balanced 0";
+            return "Balanced";
         }
 
-        return `${summary.balance > 0 ? "Surplus" : "Deficit"} ${this.formatValue(Math.abs(summary.balance))}`;
+        return summary.balance > 0 ? "Surplus" : "Deficit";
     }
 
     private getLegendPosition(): LegendPosition {
