@@ -585,13 +585,14 @@ export class Visual implements IVisual {
         const summaryFontSize = fontSize + 2;
 
         this.appendSummaryLabelBlock(
-            tankX + tankWidth * 0.25,
+            tankX,
             y,
             "Inflow",
             this.formatValue(summary.totalIn),
             textColor,
             summaryFontSize,
-            "600"
+            "600",
+            "start"
         );
         this.appendSummaryLabelBlock(
             tankX + tankWidth * 0.5,
@@ -600,16 +601,18 @@ export class Visual implements IVisual {
             this.formatValue(Math.abs(summary.balance)),
             textColor,
             summaryFontSize + 2,
-            "700"
+            "700",
+            "middle"
         );
         this.appendSummaryLabelBlock(
-            tankX + tankWidth * 0.75,
+            tankX + tankWidth,
             y,
             "Outflow",
             this.formatValue(summary.totalOut),
             textColor,
             summaryFontSize,
-            "600"
+            "600",
+            "end"
         );
     }
 
@@ -620,7 +623,8 @@ export class Visual implements IVisual {
         valueText: string,
         color: string,
         fontSize: number,
-        weight: string
+        weight: string,
+        anchor: string
     ): void {
         const lineHeight = fontSize + 3;
         const text = this.svgElement("text");
@@ -633,7 +637,7 @@ export class Visual implements IVisual {
         text.setAttribute("fill", color);
         text.setAttribute("font-size", fontSize.toString());
         text.setAttribute("font-weight", weight);
-        text.setAttribute("text-anchor", "middle");
+        text.setAttribute("text-anchor", anchor);
 
         label.setAttribute("x", x.toFixed(2));
         label.textContent = labelText;
