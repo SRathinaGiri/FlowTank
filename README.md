@@ -21,10 +21,10 @@ The visual is designed for finance, operations, sales, supply chain, and executi
 ## Field Wells
 
 - **Source**: Pipe label, such as revenue category or expense category.
-- **Direction**: Optional grouping that identifies inflow or outflow. Values containing words like `Revenue`, `Income`, `Inflow`, or `Credit` are treated as inflow. Values containing words like `Expense`, `Expenditure`, `Outflow`, `Cost`, or `Debit` are treated as outflow.
+- **Direction**: Optional grouping that identifies inflow/outflow or source/application of funds. Values containing words like `Source`, `Sources`, `Revenue`, `Income`, `Inflow`, `Credit`, or `Received` are treated as inflow/source of funds. Values containing words like `Application`, `Applications`, `Expense`, `Expenditure`, `Outflow`, `Cost`, `Debit`, `Use`, or `Utilization` are treated as outflow/application of funds.
 - **Amount**: Numeric value used for pipe thickness and tank totals.
 
-If **Direction** is not supplied, positive amounts are treated as inflow/source of funds and negative amounts are treated as outflow/application of funds.
+If **Direction** is not supplied, positive amounts are treated as inflow/source of funds and negative amounts are treated as outflow/application of funds. If all amounts are positive, or the sign of the amount does not identify the flow side, add a **Direction** column and enter values such as `Source of funds` or `Application of funds`, `Inflow` or `Outflow`, or equivalent business labels.
 
 ## Number Formatting
 

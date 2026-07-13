@@ -416,11 +416,11 @@ export class Visual implements IVisual {
         const normalized = directionValue.trim().toLowerCase();
 
         if (normalized) {
-            if (/(out|expense|expenditure|cost|debit|payment|spent|loss)/.test(normalized)) {
+            if (/\b(out|outflow|expense|expenditure|cost|debit|payment|spent|loss|application|applications|use|uses|utilization|deduction|deductions|disbursement|disbursements)\b/.test(normalized)) {
                 return "out";
             }
 
-            if (/(in|income|revenue|sales|receipt|credit|profit|earned)/.test(normalized)) {
+            if (/\b(in|inflow|income|revenue|sales|receipt|receipts|credit|profit|earned|source|sources|funding|received)\b/.test(normalized)) {
                 return "in";
             }
         }
@@ -1117,7 +1117,7 @@ export class Visual implements IVisual {
 
         this.appendText(ViewBoxWidth / 2, titleY, "FlowTank", colors.text, 30, "middle", "700");
         this.appendText(ViewBoxWidth / 2, titleY + 42, "Add Source, optional Direction, and Amount fields.", colors.text, 16, "middle", "600", "flowTankMuted");
-        this.appendText(ViewBoxWidth / 2, titleY + 66, "Positive amounts become inflow; negative amounts become outflow.", colors.text, 14, "middle", "500", "flowTankMuted");
+        this.appendText(ViewBoxWidth / 2, titleY + 66, "Use Direction for inflow/outflow or source/application when signs do not distinguish rows.", colors.text, 14, "middle", "500", "flowTankMuted");
 
         const link = this.appendText(ViewBoxWidth / 2, linkY, "Open GitHub documentation", colors.focus, 15, "middle", "700", "flowTankLink");
         link.setAttribute("tabindex", "0");

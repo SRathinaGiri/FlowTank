@@ -11,14 +11,15 @@ To use the visual:
 1. Assign a category field, such as revenue or expense category, to Source.
 2. Assign a numeric field or measure to Amount.
 3. Optionally assign a Direction field to identify inflow/outflow rows, or source/application of funds categories.
-4. If Direction is not supplied, positive amounts are treated as inflows or sources of funds, and negative amounts are treated as outflows or applications of funds.
-5. Use slicers such as Year or Region to validate that FlowTank responds to Power BI cross-filtering.
-6. Hover over pipes or tank sections to view native Power BI tooltips.
-7. Use the Format pane to change inflow color, outflow color, balance colors, label visibility, label content, text size, display units, and decimal precision.
+4. If all Amount values are positive, or the sign does not identify the flow side, add a Direction column and enter values such as Source of funds, Application of funds, Inflow, or Outflow.
+5. If Direction is not supplied, positive amounts are treated as inflows or sources of funds, and negative amounts are treated as outflows or applications of funds.
+6. Use slicers such as Year or Region to validate that FlowTank responds to Power BI cross-filtering.
+7. Hover over pipes or tank sections to view native Power BI tooltips.
+8. Use the Format pane to change inflow color, outflow color, balance colors, label visibility, label content, text size, display units, and decimal precision.
 
 Tips:
 
 - Use Display units: None when the report should preserve the exact field or measure format.
 - Turn on item labels when the visual has enough space to show category names inside the tank.
 - Use the balance label to quickly identify whether the current selection has a surplus or deficit.
-- Use a Direction column for explicit classification when the data contains both inflow/outflow labels, source/application of funds labels, or positive and negative accounting conventions.
+- Use a Direction column for explicit classification when the data contains all-positive amounts, both inflow/outflow labels, source/application of funds labels, or positive and negative accounting conventions.
