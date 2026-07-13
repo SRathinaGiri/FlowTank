@@ -2,6 +2,10 @@
 
 FlowTank is a Microsoft Power BI custom visual for comparing multiple inflows, multiple outflows, and the resulting balance in a central tank view. It is useful for financial flows, budgets, income and expense mixes, cash movement, and other scenarios where users need to compare what enters and leaves a system.
 
+FlowTank helps report authors explain net movement at a glance: the left side shows contributing inflows, the right side shows outflows, and the central tank summarizes whether the selected context ends in a surplus or deficit. Business users can use the visual to compare revenue and expense categories, funding and utilization, cash received and cash spent, inventory intake and consumption, or any other scenario where positive and negative flows need to be understood together.
+
+The visual is designed for finance, operations, sales, supply chain, and executive reporting audiences that need a compact alternative to separate bar charts or waterfall views. It supports native Power BI formatting, tooltips, cross-filtering, keyboard focus, high contrast mode, and configurable labels so the same report can serve both overview dashboards and detailed review pages.
+
 ## Features
 
 - Separate inflow and outflow sides with proportional pipe thickness.
@@ -39,6 +43,10 @@ Sample assets are included for AppSource validation and user evaluation:
 - `FlowTankScreenshot.png`
 
 The CSV includes `Year` and `Region` dimensions in addition to the FlowTank field-well columns. Use `Region` in a slicer or another visual to validate inbound cross-filtering and cross-highlighting behavior.
+
+Hints and tips for the sample report are included on the `Instruction` page in `sample-data/flowtank_sample.pbix` and maintained in `docs/sample-file-hints-and-tips.md`.
+
+The Partner Center offer description draft is maintained in `docs/partner-center-offer-description.md`.
 
 ## Build
 

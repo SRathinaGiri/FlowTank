@@ -1,8 +1,16 @@
+# Dependencies
 node_modules/
+node_modules/**
+
+# Power BI visual build output
 .tmp/
+.tmp/**
 dist/
-.vscode/
+dist/**
 webpack.statistics*.html
+
+# Local editor settings
+.vscode/
 
 npm-debug.log*
 yarn-debug.log*
