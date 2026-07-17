@@ -40,26 +40,6 @@
                         }
                     }
                 },
-                "profitColor": {
-                    "displayName": "Profit color",
-                    "type": {
-                        "fill": {
-                            "solid": {
-                                "color": true
-                            }
-                        }
-                    }
-                },
-                "lossColor": {
-                    "displayName": "Loss color",
-                    "type": {
-                        "fill": {
-                            "solid": {
-                                "color": true
-                            }
-                        }
-                    }
-                },
                 "textColor": {
                     "displayName": "Text color",
                     "type": {
@@ -72,12 +52,6 @@
                 },
                 "showLabels": {
                     "displayName": "Show legends",
-                    "type": {
-                        "bool": true
-                    }
-                },
-                "showTankLabels": {
-                    "displayName": "Show tank labels",
                     "type": {
                         "bool": true
                     }
@@ -107,6 +81,21 @@
                             {
                                 "value": "labelValuePercentage",
                                 "displayName": "Labels with values and percentages"
+                            }
+                        ]
+                    }
+                },
+                "liquidArrangement": {
+                    "displayName": "Liquid arrangement",
+                    "type": {
+                        "enumeration": [
+                            {
+                                "value": "topToBottom",
+                                "displayName": "Top to bottom"
+                            },
+                            {
+                                "value": "bottomToTop",
+                                "displayName": "Bottom to top"
                             }
                         ]
                     }
@@ -201,6 +190,65 @@
                     "displayName": "Percentage decimal places",
                     "type": {
                         "integer": true
+                    }
+                }
+            }
+        },
+        "labels": {
+            "displayName": "Labels",
+            "properties": {
+                "inflowLabel": {
+                    "displayName": "Inflow label",
+                    "type": {
+                        "text": true
+                    }
+                },
+                "outflowLabel": {
+                    "displayName": "Outflow label",
+                    "type": {
+                        "text": true
+                    }
+                },
+                "surplusLabel": {
+                    "displayName": "Surplus label",
+                    "type": {
+                        "text": true
+                    }
+                },
+                "deficitLabel": {
+                    "displayName": "Deficit label",
+                    "type": {
+                        "text": true
+                    }
+                },
+                "balancedLabel": {
+                    "displayName": "Balanced label",
+                    "type": {
+                        "text": true
+                    }
+                },
+                "inflowLegendTitle": {
+                    "displayName": "Inflow legend title",
+                    "type": {
+                        "text": true
+                    }
+                },
+                "outflowLegendTitle": {
+                    "displayName": "Outflow legend title",
+                    "type": {
+                        "text": true
+                    }
+                },
+                "arrangeBottomToTopLabel": {
+                    "displayName": "Arrange bottom-to-top label",
+                    "type": {
+                        "text": true
+                    }
+                },
+                "arrangeTopToBottomLabel": {
+                    "displayName": "Arrange top-to-bottom label",
+                    "type": {
+                        "text": true
                     }
                 }
             }

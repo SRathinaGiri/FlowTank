@@ -19,18 +19,6 @@ class AppearanceSettings extends FormattingSettingsCard {
         value: { value: "#FCA5A5" }
     });
 
-    profitColor = new formattingSettings.ColorPicker({
-        name: "profitColor",
-        displayName: "Profit color",
-        value: { value: "#93C5FD" }
-    });
-
-    lossColor = new formattingSettings.ColorPicker({
-        name: "lossColor",
-        displayName: "Loss color",
-        value: { value: "#F87171" }
-    });
-
     textColor = new formattingSettings.ColorPicker({
         name: "textColor",
         displayName: "Text color",
@@ -40,12 +28,6 @@ class AppearanceSettings extends FormattingSettingsCard {
     showLabels = new formattingSettings.ToggleSwitch({
         name: "showLabels",
         displayName: "Show legends",
-        value: true
-    });
-
-    showTankLabels = new formattingSettings.ToggleSwitch({
-        name: "showTankLabels",
-        displayName: "Show tank labels",
         value: true
     });
 
@@ -64,6 +46,16 @@ class AppearanceSettings extends FormattingSettingsCard {
             { value: "labelValue", displayName: "Labels with values" },
             { value: "labelPercentage", displayName: "Labels with percentages" },
             { value: "labelValuePercentage", displayName: "Labels with values and percentages" }
+        ]
+    });
+
+    liquidArrangement = new formattingSettings.ItemDropdown({
+        name: "liquidArrangement",
+        displayName: "Liquid arrangement",
+        value: { value: "topToBottom", displayName: "Top to bottom" },
+        items: [
+            { value: "topToBottom", displayName: "Top to bottom" },
+            { value: "bottomToTop", displayName: "Bottom to top" }
         ]
     });
 
@@ -105,13 +97,11 @@ class AppearanceSettings extends FormattingSettingsCard {
     slices: Array<FormattingSettingsSlice> = [
         this.inflowColor,
         this.outflowColor,
-        this.profitColor,
-        this.lossColor,
         this.textColor,
         this.showLabels,
-        this.showTankLabels,
         this.showItemLabels,
         this.itemLabelContent,
+        this.liquidArrangement,
         this.showBalance,
         this.balancePosition,
         this.legendPosition,
@@ -154,8 +144,88 @@ class NumberFormattingSettings extends FormattingSettingsCard {
     ];
 }
 
+class LabelSettings extends FormattingSettingsCard {
+    inflowLabel = new formattingSettings.TextInput({
+        name: "inflowLabel",
+        displayName: "Inflow label",
+        value: "Inflow",
+        placeholder: "Inflow"
+    });
+
+    outflowLabel = new formattingSettings.TextInput({
+        name: "outflowLabel",
+        displayName: "Outflow label",
+        value: "Outflow",
+        placeholder: "Outflow"
+    });
+
+    surplusLabel = new formattingSettings.TextInput({
+        name: "surplusLabel",
+        displayName: "Surplus label",
+        value: "Surplus",
+        placeholder: "Surplus"
+    });
+
+    deficitLabel = new formattingSettings.TextInput({
+        name: "deficitLabel",
+        displayName: "Deficit label",
+        value: "Deficit",
+        placeholder: "Deficit"
+    });
+
+    balancedLabel = new formattingSettings.TextInput({
+        name: "balancedLabel",
+        displayName: "Balanced label",
+        value: "Balanced",
+        placeholder: "Balanced"
+    });
+
+    inflowLegendTitle = new formattingSettings.TextInput({
+        name: "inflowLegendTitle",
+        displayName: "Inflow legend title",
+        value: "Inflow Mix",
+        placeholder: "Inflow Mix"
+    });
+
+    outflowLegendTitle = new formattingSettings.TextInput({
+        name: "outflowLegendTitle",
+        displayName: "Outflow legend title",
+        value: "Outflow Mix",
+        placeholder: "Outflow Mix"
+    });
+
+    arrangeBottomToTopLabel = new formattingSettings.TextInput({
+        name: "arrangeBottomToTopLabel",
+        displayName: "Arrange bottom-to-top label",
+        value: "Arrange liquid bottom to top",
+        placeholder: "Arrange liquid bottom to top"
+    });
+
+    arrangeTopToBottomLabel = new formattingSettings.TextInput({
+        name: "arrangeTopToBottomLabel",
+        displayName: "Arrange top-to-bottom label",
+        value: "Arrange liquid top to bottom",
+        placeholder: "Arrange liquid top to bottom"
+    });
+
+    name: string = "labels";
+    displayName: string = "Labels";
+    slices: Array<FormattingSettingsSlice> = [
+        this.inflowLabel,
+        this.outflowLabel,
+        this.surplusLabel,
+        this.deficitLabel,
+        this.balancedLabel,
+        this.inflowLegendTitle,
+        this.outflowLegendTitle,
+        this.arrangeBottomToTopLabel,
+        this.arrangeTopToBottomLabel
+    ];
+}
+
 export class VisualFormattingSettingsModel extends FormattingSettingsModel {
     appearance = new AppearanceSettings();
     numberFormatting = new NumberFormattingSettings();
-    cards = [this.appearance, this.numberFormatting];
+    labels = new LabelSettings();
+    cards = [this.appearance, this.numberFormatting, this.labels];
 }

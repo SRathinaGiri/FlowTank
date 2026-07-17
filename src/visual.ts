@@ -33,6 +33,7 @@ interface FlowItem {
 
 type FlowDirection = "in" | "out";
 type LegendPosition = "both" | "left" | "right";
+type LiquidArrangement = "topToBottom" | "bottomToTop";
 
 interface FlowSummary {
     inflows: FlowItem[];
@@ -111,6 +112,10 @@ export class Visual implements IVisual {
     private viewBoxHeight = DefaultViewBoxHeight;
     private amountFormat = DefaultValueFormat;
     private autoDisplayUnitValue = 0;
+    private currentSummary: FlowSummary | undefined;
+    private currentColors: RenderColors | undefined;
+    private liquidArrangementOverride: LiquidArrangement | undefined;
+    private lastConfiguredLiquidArrangement: LiquidArrangement | undefined;
     private formattingSettings: VisualFormattingSettingsModel;
     private readonly formattingSettingsService: FormattingSettingsService;
 
@@ -151,6 +156,7 @@ export class Visual implements IVisual {
             this.formattingSettings = dataView
                 ? this.formattingSettingsService.populateFormattingSettingsModel(VisualFormattingSettingsModel, dataView)
                 : new VisualFormattingSettingsModel();
+            this.syncLiquidArrangementDefault();
             const colors = this.getRenderColors();
             this.applyColorTheme(colors);
             this.allowInteractions = !this.host.hostCapabilities || this.host.hostCapabilities.allowInteractions !== false;
@@ -160,11 +166,15 @@ export class Visual implements IVisual {
 
             const summary = this.getFlowSummary(dataView);
             if (!summary.inflows.length && !summary.outflows.length) {
+                this.currentSummary = undefined;
+                this.currentColors = undefined;
                 this.renderLandingPage(colors);
                 this.host.eventService.renderingFinished(options);
                 return;
             }
 
+            this.currentSummary = summary;
+            this.currentColors = colors;
             this.render(summary, colors);
             this.updateSelectionStyles();
             this.host.eventService.renderingFinished(options);
@@ -194,7 +204,6 @@ export class Visual implements IVisual {
         const inflowColor = colors.inflow;
         const outflowColor = colors.outflow;
         const showLegends = this.formattingSettings.appearance.showLabels.value;
-        const showTankLabels = this.formattingSettings.appearance.showTankLabels.value;
         const showItemLabels = this.formattingSettings.appearance.showItemLabels.value;
         const showBalance = this.formattingSettings.appearance.showBalance.value;
         const balancePosition = this.formattingSettings.appearance.balancePosition.value.value;
@@ -218,8 +227,9 @@ export class Visual implements IVisual {
         const inFillHeight = Math.max(8, maxLiquidHeight * (summary.totalIn / maxSideTotal));
         const outFillHeight = Math.max(8, maxLiquidHeight * (summary.totalOut / maxSideTotal));
 
-        const inflowEntries = this.getPipeEntries(summary.inflows, "in", tank.y, tank.height, inFillHeight, summary.totalIn, summary.totalIn, maxFlowValue, inflowColor);
-        const outflowEntries = this.getPipeEntries(summary.outflows, "out", tank.y, tank.height, outFillHeight, summary.totalOut, summary.totalOut, maxFlowValue, outflowColor);
+        const liquidArrangement = this.getLiquidArrangement();
+        const inflowEntries = this.getPipeEntries(summary.inflows, "in", tank.y, tank.height, inFillHeight, summary.totalIn, summary.totalIn, maxFlowValue, inflowColor, liquidArrangement);
+        const outflowEntries = this.getPipeEntries(summary.outflows, "out", tank.y, tank.height, outFillHeight, summary.totalOut, summary.totalOut, maxFlowValue, outflowColor, liquidArrangement);
 
         const tankGroup = this.svgElement("g");
         this.svg.appendChild(tankGroup);
@@ -241,18 +251,17 @@ export class Visual implements IVisual {
         divider.setAttribute("y2", (tankBottom - 18).toString());
         tankGroup.appendChild(divider);
 
-        if (showTankLabels && this.canShowTankLabels(tank.width, tank.height, fontSize)) {
-            this.appendText(tank.x + tank.width * 0.25, tank.y + 32, "Inflow", textColor, fontSize + 2, "middle", "600");
-            this.appendText(tank.x + tank.width * 0.75, tank.y + 32, "Outflow", textColor, fontSize + 2, "middle", "600");
-        }
-
         if (showLegends) {
-            this.renderLegends(legendPosition, inflowEntries, outflowEntries, summary, tank.x, tank.y, tank.width, textColor, fontSize);
+            this.renderLegends(legendPosition, inflowEntries, outflowEntries, summary, tank.x, tank.y, tank.width, textColor, fontSize, liquidArrangement);
         }
 
         if (showBalance) {
             const summaryY = balancePosition === "bottom" ? tankBottom + 25 : 35;
             this.appendSummaryLabels(summary, summaryY, tank.x, tank.width, textColor, fontSize);
+        }
+
+        if (this.allowInteractions) {
+            this.appendLiquidArrangementButton(liquidArrangement, colors);
         }
     }
 
@@ -265,30 +274,40 @@ export class Visual implements IVisual {
         totalValue: number,
         percentBasis: number,
         maxFlowValue: number,
-        baseColor: string
+        baseColor: string,
+        liquidArrangement: LiquidArrangement
     ): PipeEntry[] {
         if (!items.length || totalValue <= 0 || fillHeight <= 0) {
             return [];
         }
 
         const sorted = [...items].sort((a, b) => b.value - a.value);
-        const palette = direction === "in" ? InflowPalette : OutflowPalette;
         const entries: PipeEntry[] = [];
         const tankBottom = tankY + tankHeight;
         const fillTop = tankBottom - fillHeight;
+        let segmentTop = fillTop;
         let segmentBottom = tankBottom;
 
         sorted.forEach((item, index) => {
-            const color = index === 0 ? baseColor : palette[index % palette.length];
+            const color = this.getFlowColor(item, direction, index, baseColor);
             const width = 4 + 28 * (item.value / maxFlowValue);
             const isLast = index === sorted.length - 1;
             const rawHeight = fillHeight * (item.value / totalValue);
-            const segmentHeight = isLast ? Math.max(0, segmentBottom - fillTop) : rawHeight;
-            const segmentTop = segmentBottom - segmentHeight;
+            const segmentHeight = isLast
+                ? liquidArrangement === "bottomToTop"
+                    ? Math.max(0, segmentBottom - fillTop)
+                    : Math.max(0, tankBottom - segmentTop)
+                : rawHeight;
+            const currentSegmentTop = liquidArrangement === "bottomToTop"
+                ? segmentBottom - segmentHeight
+                : segmentTop;
+            const currentSegmentBottom = liquidArrangement === "bottomToTop"
+                ? segmentBottom
+                : segmentTop + segmentHeight;
             const segmentInset = Math.min(Math.max(width / 2 + 2, 5), Math.max(segmentHeight / 2, 0));
             const preferredY = direction === "in"
-                ? segmentTop + segmentInset
-                : segmentBottom - segmentInset;
+                ? currentSegmentTop + segmentInset
+                : currentSegmentBottom - segmentInset;
             const y = this.clamp(preferredY, tankY + 2, tankBottom - 2);
 
             entries.push({
@@ -303,10 +322,14 @@ export class Visual implements IVisual {
                 y,
                 width,
                 percent: percentBasis > 0 ? item.value / percentBasis : 0,
-                segmentTop,
-                segmentBottom
+                segmentTop: currentSegmentTop,
+                segmentBottom: currentSegmentBottom
             });
-            segmentBottom = segmentTop;
+            if (liquidArrangement === "bottomToTop") {
+                segmentBottom = currentSegmentTop;
+            } else {
+                segmentTop = currentSegmentBottom;
+            }
         });
 
         return entries;
@@ -511,18 +534,17 @@ export class Visual implements IVisual {
             return;
         }
 
-        let segmentTop = bottom - totalHeight;
+        const fillTop = bottom - totalHeight;
 
         entries.forEach((entry, index) => {
-            const isLast = index === entries.length - 1;
-            const rawHeight = totalHeight * (entry.value / totalValue);
-            const segmentHeight = isLast ? Math.max(0, bottom - segmentTop) : rawHeight;
+            const segmentTop = entry.segmentTop;
+            const segmentHeight = Math.max(0, entry.segmentBottom - entry.segmentTop);
+            const waveTop = Math.abs(entry.segmentTop - fillTop) < 0.5 || index === 0 && entry.segmentTop <= fillTop + 0.5;
 
-            this.appendLiquid(parent, x, segmentTop, width, segmentHeight, entry, index === 0);
+            this.appendLiquid(parent, x, segmentTop, width, segmentHeight, entry, waveTop);
             if (showItemLabels) {
                 this.appendLiquidItemLabel(entry, totalValue, x, segmentTop, width, segmentHeight, textColor, fontSize);
             }
-            segmentTop += segmentHeight;
         });
     }
 
@@ -587,7 +609,7 @@ export class Visual implements IVisual {
         this.appendSummaryLabelBlock(
             tankX,
             y,
-            "Inflow",
+            this.getInflowLabel(),
             this.formatValue(summary.totalIn),
             textColor,
             summaryFontSize,
@@ -607,7 +629,7 @@ export class Visual implements IVisual {
         this.appendSummaryLabelBlock(
             tankX + tankWidth,
             y,
-            "Outflow",
+            this.getOutflowLabel(),
             this.formatValue(summary.totalOut),
             textColor,
             summaryFontSize,
@@ -651,6 +673,79 @@ export class Visual implements IVisual {
         this.svg.appendChild(text);
     }
 
+    private appendLiquidArrangementButton(liquidArrangement: LiquidArrangement, colors: RenderColors): void {
+        const size = 30;
+        const x = ViewBoxWidth - size - 18;
+        const y = 18;
+        const button = this.svgElement("g");
+        const background = this.svgElement("rect");
+        const title = this.svgElement("title");
+        const nextArrangement = this.getOppositeLiquidArrangement(liquidArrangement);
+        const label = nextArrangement === "bottomToTop"
+            ? this.getArrangeBottomToTopLabel()
+            : this.getArrangeTopToBottomLabel();
+
+        button.classList.add("flowTankArrangementButton");
+        button.setAttribute("tabindex", "0");
+        button.setAttribute("focusable", "true");
+        button.setAttribute("role", "button");
+        button.setAttribute("aria-label", label);
+        button.setAttribute("aria-pressed", liquidArrangement === "bottomToTop" ? "true" : "false");
+
+        title.textContent = label;
+        button.appendChild(title);
+
+        background.classList.add("flowTankArrangementButtonBackground");
+        background.setAttribute("x", x.toFixed(2));
+        background.setAttribute("y", y.toFixed(2));
+        background.setAttribute("width", size.toString());
+        background.setAttribute("height", size.toString());
+        background.setAttribute("rx", "6");
+        background.setAttribute("fill", colors.tankFill);
+        button.appendChild(background);
+
+        this.appendArrangementIcon(button, x, y, size, colors.text, nextArrangement);
+        button.addEventListener("click", (event: MouseEvent) => {
+            event.preventDefault();
+            event.stopPropagation();
+            this.toggleLiquidArrangement();
+        });
+        button.addEventListener("keydown", (event: KeyboardEvent) => {
+            if (event.key === "Enter" || event.key === " " || event.key === "Spacebar") {
+                event.preventDefault();
+                event.stopPropagation();
+                this.toggleLiquidArrangement();
+            }
+        });
+
+        this.svg.appendChild(button);
+    }
+
+    private appendArrangementIcon(
+        parent: SVGElement,
+        x: number,
+        y: number,
+        size: number,
+        color: string,
+        liquidArrangement: LiquidArrangement
+    ): void {
+        const centerX = x + size / 2;
+        const topY = y + 8;
+        const bottomY = y + size - 8;
+        const arrow = this.svgElement("path");
+        const arrowHead = liquidArrangement === "bottomToTop"
+            ? `M ${(centerX - 6).toFixed(2)} ${(topY + 7).toFixed(2)} L ${centerX.toFixed(2)} ${(topY + 1).toFixed(2)} L ${(centerX + 6).toFixed(2)} ${(topY + 7).toFixed(2)}`
+            : `M ${(centerX - 6).toFixed(2)} ${(bottomY - 7).toFixed(2)} L ${centerX.toFixed(2)} ${(bottomY - 1).toFixed(2)} L ${(centerX + 6).toFixed(2)} ${(bottomY - 7).toFixed(2)}`;
+        const arrowLine = liquidArrangement === "bottomToTop"
+            ? `M ${centerX.toFixed(2)} ${(bottomY - 1).toFixed(2)} L ${centerX.toFixed(2)} ${(topY + 1).toFixed(2)}`
+            : `M ${centerX.toFixed(2)} ${(topY + 1).toFixed(2)} L ${centerX.toFixed(2)} ${(bottomY - 1).toFixed(2)}`;
+
+        arrow.classList.add("flowTankArrangementIcon");
+        arrow.setAttribute("d", `${arrowLine} ${arrowHead}`);
+        arrow.setAttribute("stroke", color);
+        parent.appendChild(arrow);
+    }
+
     private renderLegends(
         legendPosition: LegendPosition,
         inflowEntries: PipeEntry[],
@@ -660,7 +755,8 @@ export class Visual implements IVisual {
         tankY: number,
         tankWidth: number,
         textColor: string,
-        fontSize: number
+        fontSize: number,
+        liquidArrangement: LiquidArrangement
     ): void {
         const legendTopY = tankY + 72;
         const secondY = legendTopY + 152;
@@ -669,19 +765,15 @@ export class Visual implements IVisual {
             const inflowLegendX = 28;
             const outflowLegendX = tankX + tankWidth + 28;
 
-            this.renderLegend("Inflow Mix", inflowEntries, summary.totalIn, inflowLegendX, legendTopY, textColor, fontSize);
-            this.renderLegend("Outflow Mix", outflowEntries, summary.totalOut, outflowLegendX, legendTopY, textColor, fontSize);
+            this.renderLegend(this.getInflowLegendTitle(), inflowEntries, summary.totalIn, inflowLegendX, legendTopY, textColor, fontSize, liquidArrangement);
+            this.renderLegend(this.getOutflowLegendTitle(), outflowEntries, summary.totalOut, outflowLegendX, legendTopY, textColor, fontSize, liquidArrangement);
             return;
         }
 
         const legendX = legendPosition === "left" ? 28 : tankX + tankWidth + 28;
 
-        this.renderLegend("Inflow Mix", inflowEntries, summary.totalIn, legendX, legendTopY, textColor, fontSize);
-        this.renderLegend("Outflow Mix", outflowEntries, summary.totalOut, legendX, secondY, textColor, fontSize);
-    }
-
-    private canShowTankLabels(tankWidth: number, tankHeight: number, fontSize: number): boolean {
-        return tankWidth >= fontSize * 16 && tankHeight >= fontSize * 12;
+        this.renderLegend(this.getInflowLegendTitle(), inflowEntries, summary.totalIn, legendX, legendTopY, textColor, fontSize, liquidArrangement);
+        this.renderLegend(this.getOutflowLegendTitle(), outflowEntries, summary.totalOut, legendX, secondY, textColor, fontSize, liquidArrangement);
     }
 
     private renderLegend(
@@ -691,7 +783,8 @@ export class Visual implements IVisual {
         x: number,
         y: number,
         textColor: string,
-        fontSize: number
+        fontSize: number,
+        liquidArrangement: LiquidArrangement
     ): void {
         if (!entries.length || totalValue <= 0) {
             return;
@@ -699,9 +792,10 @@ export class Visual implements IVisual {
 
         const legendFontSize = Math.max(9, fontSize - 1);
         const rowHeight = legendFontSize + 8;
+        const legendEntries = this.getLegendEntries(entries, liquidArrangement);
 
         this.appendText(x, y, title, textColor, fontSize + 1, "start", "700");
-        entries.forEach((entry, index) => {
+        legendEntries.forEach((entry, index) => {
             const rowY = y + 24 + index * rowHeight;
             const swatch = this.svgElement("rect");
             const label = this.truncateText(
@@ -935,6 +1029,16 @@ export class Visual implements IVisual {
         this.selectionElements = [];
     }
 
+    private rerenderCurrentVisual(): void {
+        if (!this.currentSummary || !this.currentColors) {
+            return;
+        }
+
+        this.clear();
+        this.render(this.currentSummary, this.currentColors);
+        this.updateSelectionStyles();
+    }
+
     private showVisualContextMenu(event: MouseEvent): void {
         event.preventDefault();
         if (!this.allowInteractions) {
@@ -972,7 +1076,7 @@ export class Visual implements IVisual {
         element.setAttribute("tabindex", "0");
         element.setAttribute("focusable", "true");
         element.setAttribute("role", "button");
-        element.setAttribute("aria-label", `${entry.direction === "in" ? "Inflow" : "Outflow"} ${entry.label}, ${this.formatValue(entry.value)}`);
+        element.setAttribute("aria-label", `${entry.direction === "in" ? this.getInflowLabel() : this.getOutflowLabel()} ${entry.label}, ${this.formatValue(entry.value)}`);
 
         element.addEventListener("click", (event: MouseEvent) => {
             event.stopPropagation();
@@ -1039,15 +1143,15 @@ export class Visual implements IVisual {
                 identities: [],
                 dataItems: [
                     {
-                        displayName: summary.balance > 0 ? "Surplus" : "Deficit",
+                        displayName: summary.balance > 0 ? this.getSurplusLabel() : this.getDeficitLabel(),
                         value: this.formatValue(Math.abs(summary.balance))
                     },
                     {
-                        displayName: "Inflow",
+                        displayName: this.getInflowLabel(),
                         value: this.formatValue(summary.totalIn)
                     },
                     {
-                        displayName: "Outflow",
+                        displayName: this.getOutflowLabel(),
                         value: this.formatValue(summary.totalOut)
                     }
                 ]
@@ -1180,11 +1284,31 @@ export class Visual implements IVisual {
         return colorInfo && colorInfo.value ? colorInfo.value : fallback;
     }
 
+    private getFlowColor(item: FlowItem, direction: FlowDirection, index: number, baseColor: string): string {
+        if (this.host.colorPalette && this.host.colorPalette.isHighContrast) {
+            return baseColor;
+        }
+
+        if (index === 0) {
+            return baseColor;
+        }
+
+        const fallbackPalette = direction === "in" ? InflowPalette : OutflowPalette;
+        const fallback = fallbackPalette[index % fallbackPalette.length];
+        const colorPalette = this.host.colorPalette;
+
+        if (colorPalette && colorPalette.getColor) {
+            return this.getPaletteColor(colorPalette.getColor(`${direction}:${item.label}`), fallback);
+        }
+
+        return fallback;
+    }
+
     private getTooltipDataItems(entry: PipeEntry): powerbi.extensibility.VisualTooltipDataItem[] {
         const dataItems: powerbi.extensibility.VisualTooltipDataItem[] = [
             {
                 displayName: "Direction",
-                value: entry.direction === "in" ? "Inflow" : "Outflow",
+                value: entry.direction === "in" ? this.getInflowLabel() : this.getOutflowLabel(),
                 color: entry.color
             },
             {
@@ -1355,16 +1479,94 @@ export class Visual implements IVisual {
 
     private getBalanceStatusLabel(summary: FlowSummary): string {
         if (summary.balance === 0) {
-            return "Balanced";
+            return this.getBalancedLabel();
         }
 
-        return summary.balance > 0 ? "Surplus" : "Deficit";
+        return summary.balance > 0 ? this.getSurplusLabel() : this.getDeficitLabel();
+    }
+
+    private getLegendEntries(entries: PipeEntry[], liquidArrangement: LiquidArrangement): PipeEntry[] {
+        return liquidArrangement === "bottomToTop" ? [...entries].reverse() : entries;
+    }
+
+    private getInflowLabel(): string {
+        return this.getConfiguredText(this.formattingSettings.labels.inflowLabel.value, "Inflow");
+    }
+
+    private getOutflowLabel(): string {
+        return this.getConfiguredText(this.formattingSettings.labels.outflowLabel.value, "Outflow");
+    }
+
+    private getSurplusLabel(): string {
+        return this.getConfiguredText(this.formattingSettings.labels.surplusLabel.value, "Surplus");
+    }
+
+    private getDeficitLabel(): string {
+        return this.getConfiguredText(this.formattingSettings.labels.deficitLabel.value, "Deficit");
+    }
+
+    private getBalancedLabel(): string {
+        return this.getConfiguredText(this.formattingSettings.labels.balancedLabel.value, "Balanced");
+    }
+
+    private getInflowLegendTitle(): string {
+        return this.getConfiguredText(this.formattingSettings.labels.inflowLegendTitle.value, "Inflow Mix");
+    }
+
+    private getOutflowLegendTitle(): string {
+        return this.getConfiguredText(this.formattingSettings.labels.outflowLegendTitle.value, "Outflow Mix");
+    }
+
+    private getArrangeBottomToTopLabel(): string {
+        return this.getConfiguredText(this.formattingSettings.labels.arrangeBottomToTopLabel.value, "Arrange liquid bottom to top");
+    }
+
+    private getArrangeTopToBottomLabel(): string {
+        return this.getConfiguredText(this.formattingSettings.labels.arrangeTopToBottomLabel.value, "Arrange liquid top to bottom");
+    }
+
+    private getConfiguredText(value: string, fallback: string): string {
+        const text = typeof value === "string" ? value.trim() : "";
+
+        return text || fallback;
     }
 
     private getLegendPosition(): LegendPosition {
         const value = this.formattingSettings.appearance.legendPosition.value.value;
 
         return value === "left" || value === "right" ? value : "both";
+    }
+
+    private getLiquidArrangement(): LiquidArrangement {
+        if (this.liquidArrangementOverride) {
+            return this.liquidArrangementOverride;
+        }
+
+        return this.getConfiguredLiquidArrangement();
+    }
+
+    private getConfiguredLiquidArrangement(): LiquidArrangement {
+        const value = this.formattingSettings.appearance.liquidArrangement.value.value;
+
+        return value === "bottomToTop" ? value : "topToBottom";
+    }
+
+    private getOppositeLiquidArrangement(liquidArrangement: LiquidArrangement): LiquidArrangement {
+        return liquidArrangement === "bottomToTop" ? "topToBottom" : "bottomToTop";
+    }
+
+    private syncLiquidArrangementDefault(): void {
+        const configuredArrangement = this.getConfiguredLiquidArrangement();
+
+        if (this.lastConfiguredLiquidArrangement !== configuredArrangement) {
+            this.liquidArrangementOverride = undefined;
+            this.lastConfiguredLiquidArrangement = configuredArrangement;
+        }
+    }
+
+    private toggleLiquidArrangement(): void {
+        this.liquidArrangementOverride = this.getOppositeLiquidArrangement(this.getLiquidArrangement());
+        this.rerenderCurrentVisual();
     }
 
     private formatPercent(value: number): string {

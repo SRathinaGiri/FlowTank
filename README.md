@@ -10,9 +10,13 @@ The visual is designed for finance, operations, sales, supply chain, and executi
 
 - Separate inflow and outflow sides with proportional pipe thickness.
 - Central tank view with stacked liquid segments for each side.
+- In-visual arrow button to switch liquid arrangement between top-to-bottom and bottom-to-top.
+- Configurable default liquid arrangement in the formatting pane.
 - Balance indicator for surplus or deficit.
-- Optional legends, tank labels, item labels, and configurable text size.
-- Formatting options for inflow, outflow, profit, loss, and text colors.
+- Optional legends, in-liquid item labels, configurable text size, and configurable display units.
+- Configurable labels for inflow, outflow, surplus, deficit, balanced state, legend titles, and sort-button accessibility text.
+- Formatting options for primary inflow, primary outflow, and text colors.
+- Additional flow segment colors use the Power BI theme palette, with built-in fallback palettes.
 - High contrast mode support using the Power BI host color palette.
 - Native Power BI tooltips, context menus, keyboard focus, and cross-visual selection.
 - Landing page with a GitHub documentation link when fields are not assigned.
@@ -75,6 +79,16 @@ npm run package:certification
 ```
 
 The packaged visual is created in `dist`.
+
+## Version 1.0.1.0 Update
+
+- Added an in-visual arrow toggle for switching liquid sort direction.
+- Added a formatting option for the default liquid arrangement.
+- Kept legend rows in the same visual order as the selected liquid arrangement.
+- Added configurable reader-facing labels for localization and custom terminology.
+- Removed unused profit/loss color settings because surplus/deficit is shown by empty tank space.
+- Removed redundant in-tank inflow/outflow labels.
+- Updated non-primary flow colors to use the Power BI theme palette.
 
 ## Certification Notes
 
